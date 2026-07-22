@@ -18,13 +18,21 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          # node:sqlite (used by the Datastore module) requires 22.5+; pin
-          # explicitly rather than trust the "22" alias to resolve high
-          # enough on a given runner image.
-          node-version: 22.11.0
+          # node:sqlite (used by the Datastore module) shipped experimental
+          # in 22.5.0 but required the --experimental-sqlite flag until
+          # 22.13.0, which dropped that requirement. Pin to a version
+          # confirmed past that boundary -- verified against Node's own
+          # doc/api/sqlite.md per tag, not assumed from the "22.5+" release
+          # note alone (that mismatch is what broke the first CI run).
+          node-version: 22.14.0
           cache: pnpm
 
       - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck
+      # --experimental-sqlite kept as a belt-and-suspenders safety net in
+      # case the pinned version above ever regresses to needing it again;
+      # harmless no-op flag on versions where it's no longer required.
       - run: pnpm test
+        env:
+          NODE_OPTIONS: --experimental-sqlite
       - run: pnpm build
