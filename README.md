@@ -1,28 +1,68 @@
 # Pagarr
 
-A faithful TypeScript/Node port of [Readarr](https://github.com/Readarr/Readarr)
-(archived 2025), books/audiobooks automation for the *arr ecosystem
-(Sonarr, Radarr, Prowlarr).
+[![Build](https://img.shields.io/github/actions/workflow/status/Jose0213/pagarr/ci.yml?branch=main)](https://github.com/Jose0213/pagarr/actions)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](./LICENSE)
+[![Discussions](https://img.shields.io/badge/discussions-GitHub-blue)](https://github.com/Jose0213/pagarr/discussions)
 
-Readarr's C#/.NET codebase became unmaintainable and the project was
-archived. The one open fork (pennydreadful/bookshelf) has been stalled
-since February 2026. This is a real port -- not a rewrite from scratch --
-of Readarr's actual architecture and behavior to TypeScript, module by
-module, with known bugs fixed on top once each module lands.
+Pagarr automates book and audiobook collection management for Usenet and
+BitTorrent users, integrating with your favorite indexers and download
+clients. It's a TypeScript rewrite of [Readarr](https://github.com/Readarr/Readarr),
+continuing book/audiobook automation for the *arr ecosystem after Readarr's
+archival.
 
-See [PORT_PLAN.md](./PORT_PLAN.md) for the module-by-module port sequence
-and architecture decisions, and
+## Status
+
+Early. The foundation (data layer, HTTP client, configuration) is being
+ported module by module from Readarr's original C#/.NET source -- see
+[PORT_PLAN.md](./PORT_PLAN.md) for the full sequence and what's landed so
+far. Not yet ready for daily use.
+
+Pagarr is a faithful port, not a from-scratch rewrite: it follows Readarr's
+actual architecture, data model, and behavior, with known bugs fixed on top
+once each module lands. See
 [docs/known-issues-fixlist.md](./docs/known-issues-fixlist.md) for the
-real, verified bug list this project fixes as it goes.
+real, verified issue list this project works through.
 
-Status: early -- foundation (data layer, config, HTTP client) in progress.
+## Getting Started
 
-## Stack
+- Installation -- coming once a first buildable release exists
+- [Architecture & port plan](./PORT_PLAN.md)
+- [Known issues being fixed](./docs/known-issues-fixlist.md)
 
-TypeScript, Node 22+, Fastify, `node:sqlite`, React frontend (Readarr's
-frontend was already React/JS -- ported to TypeScript incrementally).
+## Support
+
+- [GitHub Discussions](https://github.com/Jose0213/pagarr/discussions)
+- [GitHub Issues](https://github.com/Jose0213/pagarr/issues)
+
+## Features
+
+Ported from Readarr, module by module:
+
+- Author/book monitoring and automatic search via indexer aggregators (Prowlarr)
+- Download client integration (qBittorrent, SABnzbd)
+- Quality profiles and automatic upgrades
+- Metadata-driven library organization and renaming
+- A web UI matching the rest of the *arr family
+
+## Contributing
+
+Pagarr is ported one module at a time, faithfully translating Readarr's
+C#/.NET source to TypeScript before patching known issues. See
+[PORT_PLAN.md](./PORT_PLAN.md) for the module sequence, stack decisions, and
+how a module goes from "ported" to "merged."
+
+### Development
+
+TypeScript, Node 22+, `pnpm`. Once a module lands:
+
+```bash
+pnpm install
+pnpm --filter @pagarr/server typecheck
+pnpm --filter @pagarr/server test
+pnpm --filter @pagarr/server build
+```
 
 ## License
 
 GPL-3.0, matching Readarr's own license -- this is a derivative work of
-Readarr's source, ported with attribution.
+Readarr's source, ported with attribution. See [LICENSE](./LICENSE).

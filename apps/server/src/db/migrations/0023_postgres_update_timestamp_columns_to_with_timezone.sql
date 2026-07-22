@@ -1,0 +1,16 @@
+-- Ported from Datastore/Migration/023_postgres_update_timestamp_columns_to_with_timezone.cs
+--
+-- This migration's entire purpose (per its name) was widening Postgres
+-- `timestamp` columns to `timestamp with time zone` -- a Postgres-only
+-- concern. SQLite has no such distinction (all datetimes are stored as TEXT/
+-- INTEGER/REAL regardless of declared affinity), so every
+-- Alter.Table(...).AlterColumn(...).AsDateTimeOffset() call in the original
+-- is a no-op here (skipped per PORT_PLAN.md's "skip anything
+-- PostgreSQL-specific" instruction).
+--
+-- The one non-Postgres-specific side effect -- `Delete.FromTable("Commands").AllRows()`,
+-- clearing the Commands queue table, presumably because in-flight command
+-- rows serialized under the old column type couldn't be trusted after the
+-- schema change -- is preserved here since it's a real behavioral effect
+-- independent of the datetime-widening rationale.
+DELETE FROM "Commands";

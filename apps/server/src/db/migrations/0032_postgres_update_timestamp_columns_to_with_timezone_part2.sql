@@ -1,0 +1,3 @@
+-- Ported from Datastore/Migration/032_postgres_update_timestamp_columns_to_with_timezone_part2.cs
+-- Postgres-only column-type widening (DownloadHistory.Date, ImportListStatus.LastInfoSync);
+-- no-op on SQLite. See migration 0023's note for the full explanation.

@@ -1,0 +1,9 @@
+-- Ported from Datastore/Migration/000_database_engine_version_check.cs
+--
+-- The C# migration ran BeforeAll (FluentMigrator [Maintenance] stage, not a
+-- versioned [Migration]) and only logged the SQLite/Postgres engine version
+-- to the app log -- it made no schema changes. There is no SQL to faithfully
+-- translate. Kept as an empty migration file purely to preserve the
+-- numbering sequence 000-040 from the C# migration history; the runner
+-- (migration-runner.ts) logs the SQLite engine version itself at startup
+-- instead of via a migration step.

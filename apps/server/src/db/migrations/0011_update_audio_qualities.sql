@@ -1,0 +1,26 @@
+-- Ported from Datastore/Migration/011_update_audio_qualities.cs
+--
+-- C# deserialized each QualityProfile's JSON "Items" array, inserted new
+-- quality entries (quality id 12 "M4B" appended right after quality id 10
+-- "MP3", and quality id 13 "UnknownAudio" prepended right before it) at the
+-- correct position relative to the existing MP3 entry, adjusted Cutoff if it
+-- pointed at MP3, and wrote the whole Items array back as JSON. This is a
+-- structural JSON-array edit (insert-relative-to-a-found-element) that
+-- SQLite's json_* functions (json_insert/json_set) can express, but only by
+-- assuming a known Items array shape (list of {Quality, Allowed, Items:[]}
+-- objects) and locating the MP3 (quality 10) entry's array index.
+--
+-- Because per-profile Items arrays are user-editable and can already vary in
+-- length/order across installs, and the safe json_insert semantics differ
+-- from "splice a new element next to an existing one by value-match" (which
+-- needs a per-row index lookup, not a fixed path), this transform is best
+-- done at the application layer where JSON can be parsed, mutated, and
+-- rewritten with the exact ProfileUpdater10 semantics from the C# source
+-- (SplitQualityAppend/SplitQualityPrepend, including the Cutoff-follows-MP3
+-- special case). Deferred here as a data migration to run once the Qualities/
+-- Profiles domain module (Phase 1) is ported and its Quality enum values are
+-- available to write correct JSON with -- see this module's final report.
+--
+-- No schema change results from this migration (Items stays TEXT/JSON), so
+-- there is nothing to apply at the Datastore layer today; this file exists
+-- only to preserve the migration-number sequence.

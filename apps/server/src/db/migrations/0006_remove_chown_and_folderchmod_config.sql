@@ -1,0 +1,15 @@
+-- Ported from Datastore/Migration/006_remove_chown_and_folderchmod_config.cs
+--
+-- C# read "filechmod"'s octal string value from Config, bit-shifted its 'r'
+-- bits into the 'x' position to derive a folder-chmod value ("chmodfolder"),
+-- inserted that, then deleted the old key. That octal-string bit-math (and
+-- the corresponding decimal<->octal string conversion) has no pure-SQL
+-- equivalent in SQLite (no base-8 format/parse function) and this
+-- unix-permissions feature is a chown/chmod config knob that predates and
+-- is orthogonal to the Datastore layer itself -- so only the unconditional
+-- deletes are ported here (a clean subset with a direct SQL translation);
+-- the value-carrying filechmod->chmodfolder conversion is deferred to an
+-- application-level one-time step in the (not-yet-ported) Configuration
+-- module, which owns Config key semantics. See this module's final report
+-- under "deferred".
+DELETE FROM "Config" WHERE "Key" IN ('folderchmod', 'chownuser', 'filechmod');
