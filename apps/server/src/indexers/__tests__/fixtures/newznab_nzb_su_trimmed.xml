@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:newznab="http://www.newznab.com/DTD/2010/feeds/attributes/">
+    <channel>
+        <atom:link href="https://api.nzbgeek.info/api?t=music&amp;cat=3000,3010,3040&amp;extended=1&amp;apikey=xxx&amp;offset=0&amp;limit=100&amp;year=2016" rel="self" type="application/rss+xml" />
+        <title>api.nzbgeek.info</title>
+        <description>NZBgeek API</description>
+        <link>http://api.nzbgeek.info/</link>
+        <language>en-gb</language>
+        <webMaster>info@nzbgeek.info (NZBgeek)</webMaster>
+        <category></category>
+        <image>
+            <url>https://api.nzbgeek.info/covers/nzbgeek.png</url>
+            <title>api.nzbgeek.info</title>
+            <link>http://api.nzbgeek.info/</link>
+            <description>NZBgeek</description>
+        </image>
+        <newznab:response offset="0" total="132" />
+        <item>
+            <title>Brainstorm-Scary Creatures-CD-FLAC-2016-NBFLAC</title>
+            <guid isPermaLink="true">https://api.nzbgeek.info/details/38884827e1e56b9336278a449e0a38ec</guid>
+            <link>https://api.nzbgeek.info/api?t=get&amp;id=38884827e1e56b9336278a449e0a38ec&amp;apikey=xxx</link>
+            <comments>https://nzbgeek.info/geekseek.php?guid=38884827e1e56b9336278a449e0a38ec</comments>
+            <pubDate>Fri, 26 May 2017 05:54:51 +0000</pubDate>
+            <category>Audio &gt; Lossless</category>
+            <description>Brainstorm-Scary Creatures-CD-FLAC-2016-NBFLAC</description>
+            <enclosure url="http://api.nzbgeek.info/api?t=get&amp;id=38884827e1e56b9336278a449e0a38ec&amp;apikey=xxx" length="492735000" type="application/x-nzb" />
+            <newznab:attr name="category" value="3000" />
+            <newznab:attr name="category" value="3040" />
+            <newznab:attr name="size" value="492735000" />
+            <newznab:attr name="guid" value="38884827e1e56b9336278a449e0a38ec" />
+            <newznab:attr name="book" value="Scary Creatures" />
+            <newznab:attr name="author" value="Brainstorm" />
+            <newznab:attr name="label" value="AFM Records" />
+            <newznab:attr name="coverurl" value="https://api.nzbgeek.info/covers/music/.jpg" />
+            <newznab:attr name="genre" value="Hard Rock &amp; Metal" />
+            <newznab:attr name="year" value="2016" />
+            <newznab:attr name="usenetdate" value="Fri, 26 May 2017 05:54:31 +0000" />
+        </item>
+        <item>
+            <title>Dylan LeBlanc-Cautionary Tale-(SL012)-CD-FLAC-2016-CUSTODES</title>
+            <guid isPermaLink="true">https://api.nzbgeek.info/details/d6395e3218b0b2ed15cbc3743df77112</guid>
+            <link>https://api.nzbgeek.info/api?t=get&amp;id=d6395e3218b0b2ed15cbc3743df77112&amp;apikey=xxx</link>
+            <comments>https://nzbgeek.info/geekseek.php?guid=d6395e3218b0b2ed15cbc3743df77112</comments>
+            <pubDate>Wed, 14 Dec 2016 20:03:39 +0000</pubDate>
+            <category>Audio &gt; Lossless</category>
+            <description>Dylan LeBlanc-Cautionary Tale-(SL012)-CD-FLAC-2016-CUSTODES</description>
+            <enclosure url="http://api.nzbgeek.info/api?t=get&amp;id=d6395e3218b0b2ed15cbc3743df77112&amp;apikey=xxx" length="295696000" type="application/x-nzb" />
+            <newznab:attr name="category" value="3000" />
+            <newznab:attr name="category" value="3040" />
+            <newznab:attr name="size" value="295696000" />
+            <newznab:attr name="guid" value="d6395e3218b0b2ed15cbc3743df77112" />
+            <newznab:attr name="book" value="Cautionary Tale" />
+            <newznab:attr name="author" value="Dylan LeBlanc" />
+            <newznab:attr name="label" value="Single Lock Records" />
+            <newznab:attr name="coverurl" value="https://api.nzbgeek.info/covers/music/.jpg" />
+            <newznab:attr name="genre" value="Folk" />
+            <newznab:attr name="year" value="2016" />
+            <newznab:attr name="grabs" value="4" />
+            <newznab:attr name="usenetdate" value="Wed, 14 Dec 2016 20:02:53 +0000" />
+        </item>
+        <item>
+            <title>Hinds-Leave Me Alone-CD-FLAC-2016-FORSAKEN</title>
+            <guid isPermaLink="true">https://api.nzbgeek.info/details/184ba8c920c587da880b55bacb3d43c6</guid>
+            <link>https://api.nzbgeek.info/api?t=get&amp;id=184ba8c920c587da880b55bacb3d43c6&amp;apikey=xxx</link>
+            <comments>https://nzbgeek.info/geekseek.php?guid=184ba8c920c587da880b55bacb3d43c6</comments>
+            <pubDate>Thu, 14 Jan 2016 13:25:03 +0000</pubDate>
+            <category>Audio &gt; Lossless</category>
+            <description>Hinds-Leave Me Alone-CD-FLAC-2016-FORSAKEN</description>
+            <enclosure url="http://api.nzbgeek.info/api?t=get&amp;id=184ba8c920c587da880b55bacb3d43c6&amp;apikey=xxx" length="302517000" type="application/x-nzb" />
+            <newznab:attr name="category" value="3000" />
+            <newznab:attr name="category" value="3040" />
+            <newznab:attr name="size" value="302517000" />
+            <newznab:attr name="guid" value="184ba8c920c587da880b55bacb3d43c6" />
+            <newznab:attr name="book" value="Leave Me Alone" />
+            <newznab:attr name="author" value="Hinds" />
+            <newznab:attr name="label" value="Mom &amp; Pop Music" />
+            <newznab:attr name="coverurl" value="https://api.nzbgeek.info/covers/music/.jpg" />
+            <newznab:attr name="genre" value="Alternative Rock" />
+            <newznab:attr name="year" value="2016" />
+            <newznab:attr name="grabs" value="12" />
+            <newznab:attr name="usenetdate" value="Thu, 14 Jan 2016 13:10:07 +0000" />
+        </item>
+    </channel>
+</rss>

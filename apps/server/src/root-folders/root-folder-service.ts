@@ -194,8 +194,11 @@ export class RootFolderService implements IRootFolderService {
   private async getDetails(rootFolder: RootFolder): Promise<void> {
     // Deliberately async with no internal await: this needs to return a
     // Promise for Promise.race below even though diskProvider's calls are
-    // synchronous fs here, per this method's doc comment.
-    // eslint-disable-next-line @typescript-eslint/require-await
+    // synchronous fs here, per this method's doc comment. (No longer needs
+    // a scoped eslint-disable -- require-await was turned off codebase-wide
+    // once this exact "async for interface/Promise-shape reasons, not
+    // because it awaits anything" pattern turned out to recur throughout
+    // the port; see eslint.config.mjs.)
     const probe = async (): Promise<void> => {
       if (this.diskProvider.folderExists(rootFolder.path)) {
         rootFolder.accessible = true;
