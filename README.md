@@ -12,10 +12,12 @@ archival.
 
 ## Status
 
-Early. The foundation (data layer, HTTP client, configuration) is being
-ported module by module from Readarr's original C#/.NET source -- see
-[PORT_PLAN.md](./PORT_PLAN.md) for the full sequence and what's landed so
-far. Not yet ready for daily use.
+Early. The foundation (data layer, HTTP client, configuration) and core
+domain model (books/authors, quality definitions, profiles, languages,
+tags, root folders) are ported, module by module, from Readarr's original
+C#/.NET source -- see [PORT_PLAN.md](./PORT_PLAN.md) for the full sequence
+and what's landed so far. No API or UI wired up yet -- not ready for daily
+use.
 
 Pagarr is a faithful port, not a from-scratch rewrite: it follows Readarr's
 actual architecture, data model, and behavior, with known bugs fixed on top
