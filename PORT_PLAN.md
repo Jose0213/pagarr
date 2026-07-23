@@ -158,29 +158,63 @@ Aggregation}/` + orchestration (`CompletedDownloadService.cs`,
 
 ### Phase 4 -- Ops/UX layer (parallel worktrees, depend on Phase 0-3)
 
-- `Notifications` (176 files, second-largest -- mostly N similar notifier
-  implementations, highly parallelizable across sub-agents by notifier)
-- `HealthCheck` (37 files)
-- `Housekeeping` (36 files)
-- `Messaging` (29 files) -- internal event bus
-- `Validation` (26 files)
-- `Update` (20 files) -- self-update mechanism (evaluate whether this is
-  worth porting at all for a self-hosted single-container app; likely skip)
-- `ThingiProvider` (18 files)
-- `Instrumentation` (11 files) -- logging
-- `Exceptions` (11 files)
-- `Queue` (5 files)
-- `Backup` (5 files)
-- `Authentication` (5 files)
-- `Jobs` (4 files)
-- `Blocklisting` (4 files)
-- `AuthorStats` (4 files)
-- `ProgressMessaging` (3 files)
-- `History` (3 files)
-- `MediaCover` (6 files)
-- `Lifecycle` (6 files)
-- `Analytics` (evaluate -- likely skip, telemetry to Readarr's own servers
-  which no longer exist)
+Split into two waves rather than one flat batch of 17 worktrees: several
+Phase 4 modules are plumbing that Notifications' provider-registry pattern
+and multiple already-merged Phase 0-3 forward-refs are waiting on
+(`Messaging`'s `IExecute`/`CommandQueueManager` -- e.g.
+`root-folders/root-folder-service.ts`'s `onRootFolderAdded` stand-in,
+`config/configService.ts`'s `onConfigSaved` stand-in; `Exceptions` -- e.g.
+`download-tracking/downloadClients.ts`'s `ReleaseUnavailableException`/
+`ReleaseBlockedException`/etc. forward-refs; `ThingiProvider`'s
+`IProvider`/`ProviderFactory` pattern, already independently re-derived
+per-module by Indexers/DownloadClients/CustomFormats/Extras' metadata
+registry -- Notifications is the last module needing that exact pattern,
+worth having the real thing to converge on).
+
+**Wave 1 -- foundational plumbing** (small, unlocks reconciliation +
+Wave 2):
+- `Messaging` (29 files) -- internal event bus (`Commands/` -- command
+  queue/executor/priority, `Events/` -- `EventAggregator`/`IHandle`).
+- `ThingiProvider` (18 files) -- the generic provider-registry base
+  (`IProvider`, `ProviderDefinition`, `ProviderFactory`, `ProviderStatus*`)
+  that Indexers/DownloadClients/CustomFormats/Extras' metadata registry each
+  independently re-derived a narrow copy of; Notifications (Wave 2) needs
+  the real thing.
+- `Instrumentation` (11 files) -- logging (`LogService`, `DatabaseTarget`,
+  log cleanup commands). Port against whatever logging primitive this repo
+  already uses ad hoc (grep for `console.error`/similar conventions
+  established in Phase 0-3 first, don't assume NLog needs a 1:1 equivalent
+  library).
+- `Exceptions` (11 files) -- the shared exception hierarchy. Reconciliation
+  target for `download-tracking`'s forward-refs (see Phase 3 commit
+  message).
+- `Authentication` (5 files), `Jobs` (4 files), `Queue` (5 files) -- small,
+  bundle into whichever Wave 1 worktree has spare capacity, or their own if
+  6 parallel agents is comfortable.
+
+**Wave 2 -- everything else** (staged once Wave 1 lands):
+- `Notifications` (176 files, second-largest) -- split further by notifier
+  count, not one worktree: shared base (`NotificationBase`, `INotification`,
+  `NotificationFactory`/`Service`/`Repository`, `NotificationDefinition`,
+  `NotificationStatus*`) as its own worktree, then per-notifier worktrees
+  grouped by real-world relevance -- research which of the 24 notifier
+  integrations (Discord, Email, Slack, Telegram, Pushover, Plex, etc. --
+  see real `Notifications/` subdirectories) are still viable/maintained
+  services before porting all of them; `Goodreads/` here is Readarr's
+  now-dead notification webhook to its own metadata server (distinct from
+  MetadataSource's now-replaced Goodreads client) and needs the same
+  scrutiny known-issues-fixlist.md #1 already applied.
+- `HealthCheck` (37 files), `Housekeeping` (36 files), `Validation` (26
+  files), `Backup` (5 files), `Blocklisting` (4 files), `AuthorStats` (4
+  files), `ProgressMessaging` (3 files), `History` (3 files), `MediaCover`
+  (6 files), `Lifecycle` (6 files).
+
+**Explicitly skipped** (per this project's original evaluation, confirmed):
+- `Update` (20 files) -- self-update mechanism, not applicable to a
+  self-hosted single-container app with its own deploy/update story.
+- `Analytics` (1 file, not 20+ as originally estimated -- verified against
+  real source) -- telemetry to Readarr's own servers, which no longer
+  exist.
 
 ### Phase 5 -- API + Frontend
 
