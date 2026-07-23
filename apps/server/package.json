@@ -16,12 +16,17 @@
     "check:regex": "node scripts/check-regex-compat.mjs"
   },
   "devDependencies": {
+    "@types/adm-zip": "0.5.7",
+    "@types/bencode": "4.0.0",
     "@types/node": "^22.10.2",
     "@vitest/coverage-v8": "3.2.7",
     "typescript": "^5.7.2",
     "vitest": "^3.2.7"
   },
   "dependencies": {
-    "fast-xml-parser": "5.10.1"
+    "adm-zip": "0.5.16",
+    "bencode": "4.0.1",
+    "fast-xml-parser": "5.10.1",
+    "node-taglib-sharp": "6.0.3"
   }
 }
