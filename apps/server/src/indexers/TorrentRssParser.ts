@@ -3,18 +3,28 @@ import { createTorrentInfo, type ReleaseInfo, type TorrentInfo } from "./release
 import { RssParser, TORRENT_ENCLOSURE_MIME_TYPES } from "./RssParser.js";
 import { XElement } from "./xml/XElement.js";
 
-const PARSE_SEEDERS_REGEX = new RegExp(
-  "(Seeder)s?:\\s+(?<value>\\d+)|(?<value>\\d+)\\s+(seeder)s?",
-  "gi"
-);
-const PARSE_LEECHERS_REGEX = new RegExp(
-  "(Leecher)s?:\\s+(?<value>\\d+)|(?<value>\\d+)\\s+(leecher)s?",
-  "gi"
-);
-const PARSE_PEERS_REGEX = new RegExp(
-  "(Peer)s?:\\s+(?<value>\\d+)|(?<value>\\d+)\\s+(peer)s?",
-  "gi"
-);
+// Each of these was ported from a single .NET regex using the same named
+// group (`value`) across two `|` alternation branches -- valid in .NET,
+// but JS's RegExp only gained that (duplicate named capture groups) in a
+// recent V8 change not present on the Node version this project's CI pins
+// to (22.14.0); see PORT_PLAN.md/the Phase 1 PartOrSetRegex fix for the
+// first time this exact class of bug broke CI. Split into two single-
+// alternative regexes tried in order via matchFirst() below, preserving
+// identical match semantics without duplicate-name support.
+function matchFirst(patterns: RegExp[], input: string): RegExpMatchArray | null {
+  for (const pattern of patterns) {
+    pattern.lastIndex = 0;
+    const match = pattern.exec(input);
+    if (match) {
+      return match;
+    }
+  }
+  return null;
+}
+
+const PARSE_SEEDERS_REGEXES = [/(Seeder)s?:\s+(?<value>\d+)/gi, /(?<value>\d+)\s+(seeder)s?/gi];
+const PARSE_LEECHERS_REGEXES = [/(Leecher)s?:\s+(?<value>\d+)/gi, /(?<value>\d+)\s+(leecher)s?/gi];
+const PARSE_PEERS_REGEXES = [/(Peer)s?:\s+(?<value>\d+)/gi, /(?<value>\d+)\s+(peer)s?/gi];
 
 /**
  * Ported from NzbDrone.Core/Indexers/TorrentRssParser.cs. Shared torrent-RSS
@@ -80,17 +90,14 @@ export class TorrentRssParser extends RssParser {
     if (this.parseSeedersInDescription && item.element("description") !== null) {
       const description = item.element("description")!.value;
 
-      PARSE_SEEDERS_REGEX.lastIndex = 0;
-      const matchSeeders = PARSE_SEEDERS_REGEX.exec(description);
+      const matchSeeders = matchFirst(PARSE_SEEDERS_REGEXES, description);
 
       if (matchSeeders?.groups?.["value"]) {
         return Number.parseInt(matchSeeders.groups["value"], 10);
       }
 
-      PARSE_PEERS_REGEX.lastIndex = 0;
-      PARSE_LEECHERS_REGEX.lastIndex = 0;
-      const matchPeers = PARSE_PEERS_REGEX.exec(description);
-      const matchLeechers = PARSE_LEECHERS_REGEX.exec(description);
+      const matchPeers = matchFirst(PARSE_PEERS_REGEXES, description);
+      const matchLeechers = matchFirst(PARSE_LEECHERS_REGEXES, description);
 
       if (matchPeers?.groups?.["value"] && matchLeechers?.groups?.["value"]) {
         return (
@@ -107,17 +114,14 @@ export class TorrentRssParser extends RssParser {
     if (this.parseSeedersInDescription && item.element("description") !== null) {
       const description = item.element("description")!.value;
 
-      PARSE_PEERS_REGEX.lastIndex = 0;
-      const matchPeers = PARSE_PEERS_REGEX.exec(description);
+      const matchPeers = matchFirst(PARSE_PEERS_REGEXES, description);
 
       if (matchPeers?.groups?.["value"]) {
         return Number.parseInt(matchPeers.groups["value"], 10);
       }
 
-      PARSE_SEEDERS_REGEX.lastIndex = 0;
-      PARSE_LEECHERS_REGEX.lastIndex = 0;
-      const matchSeeders = PARSE_SEEDERS_REGEX.exec(description);
-      const matchLeechers = PARSE_LEECHERS_REGEX.exec(description);
+      const matchSeeders = matchFirst(PARSE_SEEDERS_REGEXES, description);
+      const matchLeechers = matchFirst(PARSE_LEECHERS_REGEXES, description);
 
       if (matchSeeders?.groups?.["value"] && matchLeechers?.groups?.["value"]) {
         return (
