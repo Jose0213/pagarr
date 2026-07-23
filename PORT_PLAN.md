@@ -173,6 +173,7 @@ worth having the real thing to converge on).
 
 **Wave 1 -- foundational plumbing** (small, unlocks reconciliation +
 Wave 2):
+
 - `Messaging` (29 files) -- internal event bus (`Commands/` -- command
   queue/executor/priority, `Events/` -- `EventAggregator`/`IHandle`).
 - `ThingiProvider` (18 files) -- the generic provider-registry base
@@ -193,6 +194,7 @@ Wave 2):
   6 parallel agents is comfortable.
 
 **Wave 2 -- everything else** (staged once Wave 1 lands):
+
 - `Notifications` (176 files, second-largest) -- split further by notifier
   count, not one worktree: shared base (`NotificationBase`, `INotification`,
   `NotificationFactory`/`Service`/`Repository`, `NotificationDefinition`,
@@ -210,6 +212,7 @@ Wave 2):
   (6 files), `Lifecycle` (6 files).
 
 **Explicitly skipped** (per this project's original evaluation, confirmed):
+
 - `Update` (20 files) -- self-update mechanism, not applicable to a
   self-hosted single-container app with its own deploy/update story.
 - `Analytics` (1 file, not 20+ as originally estimated -- verified against

@@ -1,0 +1,8 @@
+# pnpm owns this file's formatting (its own canonical quote/indent style).
+# Letting Prettier reformat it causes needless churn every time pnpm
+# regenerates it (quote-style flip-flopping between runs) with zero benefit
+# -- this file is never hand-edited.
+pnpm-lock.yaml
+
+dist/
+node_modules/
