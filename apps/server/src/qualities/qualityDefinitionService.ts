@@ -143,11 +143,15 @@ export class QualityDefinitionService implements IQualityDefinitionService {
     const insertList: QualityDefinition[] = [];
     const updateList: QualityDefinition[] = [];
 
-    const allDefinitions = [...Quality.DefaultQualityDefinitions].sort((a, b) => a.weight - b.weight);
+    const allDefinitions = [...Quality.DefaultQualityDefinitions].sort(
+      (a, b) => a.weight - b.weight
+    );
     const existingDefinitions = [...this.repo.all()];
 
     for (const definition of allDefinitions) {
-      const existingIndex = existingDefinitions.findIndex((d) => d.quality.id === definition.quality.id);
+      const existingIndex = existingDefinitions.findIndex(
+        (d) => d.quality.id === definition.quality.id
+      );
 
       if (existingIndex === -1) {
         insertList.push(definition);
@@ -191,7 +195,9 @@ export class QualityDefinitionService implements IQualityDefinitionService {
   execute(command: ResetQualityDefinitionsCommand): void {
     const updateList: QualityDefinition[] = [];
 
-    const allDefinitions = [...Quality.DefaultQualityDefinitions].sort((a, b) => a.weight - b.weight);
+    const allDefinitions = [...Quality.DefaultQualityDefinitions].sort(
+      (a, b) => a.weight - b.weight
+    );
     const existingDefinitions = [...this.repo.all()];
 
     for (const definition of allDefinitions) {
@@ -216,7 +222,9 @@ export class QualityDefinitionService implements IQualityDefinitionService {
 
 /** Ported from the private static `WithWeight(QualityDefinition definition)` helper. */
 function withWeight(definition: QualityDefinition): QualityDefinition {
-  const match = Quality.DefaultQualityDefinitions.find((d) => d.quality.id === definition.quality.id);
+  const match = Quality.DefaultQualityDefinitions.find(
+    (d) => d.quality.id === definition.quality.id
+  );
 
   if (match === undefined) {
     throw new Error("Sequence contains no matching element");

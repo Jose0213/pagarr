@@ -52,7 +52,7 @@ export class DiskProvider implements IDiskProvider {
     try {
       await writeFile(
         probePath,
-        `This file was created to verify if '${path}' is writable. It should've been automatically deleted. Feel free to delete it.`,
+        `This file was created to verify if '${path}' is writable. It should've been automatically deleted. Feel free to delete it.`
       );
       await rm(probePath, { force: true });
       return true;

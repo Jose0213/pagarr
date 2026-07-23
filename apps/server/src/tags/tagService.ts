@@ -82,7 +82,7 @@ export class TagService {
   constructor(
     private readonly repo: TagRepository,
     providers: TagUsageProviders = {},
-    private readonly onTagsUpdated?: () => void,
+    private readonly onTagsUpdated?: () => void
   ) {
     this.providers = {
       delayProfiles: providers.delayProfiles ?? EMPTY_PROVIDER,
@@ -197,7 +197,7 @@ export class TagService {
 
     if (tagDetailsInUse(details)) {
       throw new ModelConflictException(
-        `Tag with ID ${tagId} '${details.label}' cannot be deleted since it's still in use`,
+        `Tag with ID ${tagId} '${details.label}' cannot be deleted since it's still in use`
       );
     }
 

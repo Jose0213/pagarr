@@ -23,7 +23,11 @@ const SERIES_BOOK_LINK_COLUMNS: ColumnMapping<SeriesBookLink>[] = [
 
 export class SeriesBookLinkRepository extends BasicRepository<SeriesBookLink> {
   constructor(database: IDatabase, eventAggregator?: IEventAggregator) {
-    super(database, { tableName: "SeriesBookLink", columns: SERIES_BOOK_LINK_COLUMNS, eventAggregator });
+    super(database, {
+      tableName: "SeriesBookLink",
+      columns: SERIES_BOOK_LINK_COLUMNS,
+      eventAggregator,
+    });
   }
 
   private db(): DatabaseSync {
@@ -43,10 +47,9 @@ export class SeriesBookLinkRepository extends BasicRepository<SeriesBookLink> {
 
   /** Ported from SeriesBookLinkRepository.GetLinksBySeries(int seriesId): `Query(x => x.SeriesId == seriesId)`. */
   getLinksBySeries(seriesId: number): SeriesBookLink[] {
-    const rows = this.db().prepare('SELECT * FROM "SeriesBookLink" WHERE "SeriesId" = ?').all(seriesId) as Record<
-      string,
-      unknown
-    >[];
+    const rows = this.db()
+      .prepare('SELECT * FROM "SeriesBookLink" WHERE "SeriesId" = ?')
+      .all(seriesId) as Record<string, unknown>[];
     return rows.map((r) => this.rowToLink(r));
   }
 

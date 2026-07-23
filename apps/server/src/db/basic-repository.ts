@@ -160,9 +160,8 @@ export class BasicRepository<TModel extends ModelBase> {
   }
 
   find(id: number): TModel | undefined {
-    const row = this.conn()
-      .prepare(`SELECT * FROM "${this.table}" WHERE "Id" = ?`)
-      .get(id) as Row | undefined;
+    const row = this.conn().prepare(`SELECT * FROM "${this.table}" WHERE "Id" = ?`).get(id) as
+      Row | undefined;
     return row ? this.rowToModel(row) : undefined;
   }
 
@@ -223,7 +222,9 @@ export class BasicRepository<TModel extends ModelBase> {
 
     const row = this.modelToRow(model);
     const params = this.columns.map(({ column }) => toSqlValue(row[column]));
-    const result = this.conn().prepare(this.insertSql).run(...params);
+    const result = this.conn()
+      .prepare(this.insertSql)
+      .run(...params);
     const inserted = { ...model, id: Number(result.lastInsertRowid) };
 
     this.modelCreated(inserted);
@@ -293,7 +294,9 @@ export class BasicRepository<TModel extends ModelBase> {
       ...columns.map(({ column }) => toSqlValue(row[column])),
       model.id,
     ];
-    this.conn().prepare(sql).run(...params);
+    this.conn()
+      .prepare(sql)
+      .run(...params);
   }
 
   /**
@@ -378,7 +381,9 @@ export class BasicRepository<TModel extends ModelBase> {
       .all(...whereClause.params, pagingSpec.pageSize, pageOffset) as Row[];
 
     const countSql = `SELECT COUNT(*) as count FROM "${this.table}" ${whereClause.sql}`;
-    const countRow = this.conn().prepare(countSql).get(...whereClause.params) as {
+    const countRow = this.conn()
+      .prepare(countSql)
+      .get(...whereClause.params) as {
       count: number;
     };
 
@@ -388,9 +393,10 @@ export class BasicRepository<TModel extends ModelBase> {
     return pagingSpec;
   }
 
-  private buildWhereClause(
-    filters: FilterExpression<TModel>[]
-  ): { sql: string; params: SQLInputValue[] } {
+  private buildWhereClause(filters: FilterExpression<TModel>[]): {
+    sql: string;
+    params: SQLInputValue[];
+  } {
     if (filters.length === 0) {
       return { sql: "", params: [] };
     }

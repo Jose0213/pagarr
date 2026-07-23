@@ -156,13 +156,33 @@ function generateApiKey(): string {
   return randomUUID().replace(/-/g, "");
 }
 
+/**
+ * Every real bootstrap config field is a scalar (string/number/boolean),
+ * matching C#'s flat XML/YAML config file -- but this class's dictionary
+ * methods take/return `unknown` values (mirroring C#'s untyped
+ * `Dictionary<string, object>`), so the type system can't rule out a
+ * non-scalar value reaching here. `String(x)` on a plain object silently
+ * produces "[object Object]"; this stringifies primitives directly and
+ * falls back to JSON for anything else so a future non-scalar value fails
+ * loudly/comparably instead of silently collapsing to a useless string.
+ */
+function stringifyConfigValue(value: unknown): string {
+  if (value === null || value === undefined) {
+    return String(value);
+  }
+  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+    return String(value);
+  }
+  return JSON.stringify(value);
+}
+
 export class ConfigFileProvider {
   private cache = new Map<string, unknown>();
 
   constructor(
     private readonly configFilePath: string,
     private readonly envOverrides: ConfigFileEnvOverrides = {},
-    private readonly onConfigFileSaved?: () => void,
+    private readonly onConfigFileSaved?: () => void
   ) {}
 
   /** Ported from ConfigFileProvider.GetConfigDictionary(). */
@@ -214,7 +234,7 @@ export class ConfigFileProvider {
         continue;
       }
 
-      const equal = String(value) === String(currentValue);
+      const equal = stringifyConfigValue(value) === stringifyConfigValue(currentValue);
       if (!equal) {
         this.setValue(key, value as string | number | boolean);
       }
@@ -224,7 +244,8 @@ export class ConfigFileProvider {
   }
 
   get bindAddress(): string {
-    const value = this.envOverrides.bindAddress ?? this.getValue("bindAddress", DEFAULTS.bindAddress);
+    const value =
+      this.envOverrides.bindAddress ?? this.getValue("bindAddress", DEFAULTS.bindAddress);
     if (!value || !value.trim()) {
       return DEFAULTS.bindAddress;
     }
@@ -244,7 +265,10 @@ export class ConfigFileProvider {
   }
 
   get launchBrowser(): boolean {
-    return this.envOverrides.launchBrowser ?? this.getValueBoolean("launchBrowser", DEFAULTS.launchBrowser);
+    return (
+      this.envOverrides.launchBrowser ??
+      this.getValueBoolean("launchBrowser", DEFAULTS.launchBrowser)
+    );
   }
 
   /**
@@ -285,28 +309,41 @@ export class ConfigFileProvider {
     }
 
     const overrideMethod = this.envOverrides.authenticationMethod;
-    if (overrideMethod && (AUTHENTICATION_TYPE_VALUES as readonly string[]).includes(overrideMethod)) {
+    if (
+      overrideMethod &&
+      (AUTHENTICATION_TYPE_VALUES as readonly string[]).includes(overrideMethod)
+    ) {
       return overrideMethod as AuthenticationType;
     }
 
-    return this.getValueEnum(AUTHENTICATION_TYPE_VALUES, "authenticationMethod", DEFAULTS.authenticationMethod);
+    return this.getValueEnum(
+      AUTHENTICATION_TYPE_VALUES,
+      "authenticationMethod",
+      DEFAULTS.authenticationMethod
+    );
   }
 
   get authenticationRequired(): AuthenticationRequiredType {
     const overrideRequired = this.envOverrides.authenticationRequired;
-    if (overrideRequired && (AUTHENTICATION_REQUIRED_TYPE_VALUES as readonly string[]).includes(overrideRequired)) {
+    if (
+      overrideRequired &&
+      (AUTHENTICATION_REQUIRED_TYPE_VALUES as readonly string[]).includes(overrideRequired)
+    ) {
       return overrideRequired as AuthenticationRequiredType;
     }
 
     return this.getValueEnum(
       AUTHENTICATION_REQUIRED_TYPE_VALUES,
       "authenticationRequired",
-      DEFAULTS.authenticationRequired,
+      DEFAULTS.authenticationRequired
     );
   }
 
   get analyticsEnabled(): boolean {
-    return this.envOverrides.analyticsEnabled ?? this.getValueBoolean("analyticsEnabled", DEFAULTS.analyticsEnabled, false);
+    return (
+      this.envOverrides.analyticsEnabled ??
+      this.getValueBoolean("analyticsEnabled", DEFAULTS.analyticsEnabled, false)
+    );
   }
 
   get branch(): string {
@@ -320,7 +357,10 @@ export class ConfigFileProvider {
   }
 
   get consoleLogLevel(): string {
-    return this.envOverrides.consoleLogLevel ?? this.getValue("consoleLogLevel", DEFAULTS.consoleLogLevel, false);
+    return (
+      this.envOverrides.consoleLogLevel ??
+      this.getValue("consoleLogLevel", DEFAULTS.consoleLogLevel, false)
+    );
   }
 
   get logSql(): boolean {
@@ -332,7 +372,10 @@ export class ConfigFileProvider {
   }
 
   get filterSentryEvents(): boolean {
-    return this.envOverrides.filterSentryEvents ?? this.getValueBoolean("filterSentryEvents", DEFAULTS.filterSentryEvents, false);
+    return (
+      this.envOverrides.filterSentryEvents ??
+      this.getValueBoolean("filterSentryEvents", DEFAULTS.filterSentryEvents, false)
+    );
   }
 
   get sslCertPath(): string {
@@ -340,7 +383,10 @@ export class ConfigFileProvider {
   }
 
   get sslCertPassword(): string {
-    return this.envOverrides.sslCertPassword ?? this.getValue("sslCertPassword", DEFAULTS.sslCertPassword);
+    return (
+      this.envOverrides.sslCertPassword ??
+      this.getValue("sslCertPassword", DEFAULTS.sslCertPassword)
+    );
   }
 
   /** Ported from ConfigFileProvider.UrlBase: trims slashes, then re-adds a single leading slash unless empty. */
@@ -360,7 +406,8 @@ export class ConfigFileProvider {
    * name if the stored value doesn't contain it (case-insensitively).
    */
   get instanceName(): string {
-    const instanceName = this.envOverrides.instanceName ?? this.getValue("instanceName", DEFAULT_APP_NAME);
+    const instanceName =
+      this.envOverrides.instanceName ?? this.getValue("instanceName", DEFAULT_APP_NAME);
 
     if (instanceName.toLowerCase().includes(DEFAULT_APP_NAME.toLowerCase())) {
       return instanceName;
@@ -378,27 +425,43 @@ export class ConfigFileProvider {
 
   get updateMechanism(): UpdateMechanism {
     const overrideMechanism = this.envOverrides.updateMechanism;
-    if (overrideMechanism && (UPDATE_MECHANISM_VALUES as readonly string[]).includes(overrideMechanism)) {
+    if (
+      overrideMechanism &&
+      (UPDATE_MECHANISM_VALUES as readonly string[]).includes(overrideMechanism)
+    ) {
       return overrideMechanism as UpdateMechanism;
     }
 
-    return this.getValueEnum(UPDATE_MECHANISM_VALUES, "updateMechanism", DEFAULTS.updateMechanism, false);
+    return this.getValueEnum(
+      UPDATE_MECHANISM_VALUES,
+      "updateMechanism",
+      DEFAULTS.updateMechanism,
+      false
+    );
   }
 
   get updateScriptPath(): string {
-    return this.envOverrides.updateScriptPath ?? this.getValue("updateScriptPath", DEFAULTS.updateScriptPath, false);
+    return (
+      this.envOverrides.updateScriptPath ??
+      this.getValue("updateScriptPath", DEFAULTS.updateScriptPath, false)
+    );
   }
 
   get syslogServer(): string {
-    return this.envOverrides.syslogServer ?? this.getValue("syslogServer", DEFAULTS.syslogServer, false);
+    return (
+      this.envOverrides.syslogServer ?? this.getValue("syslogServer", DEFAULTS.syslogServer, false)
+    );
   }
 
   get syslogPort(): number {
-    return this.envOverrides.syslogPort ?? this.getValueInt("syslogPort", DEFAULTS.syslogPort, false);
+    return (
+      this.envOverrides.syslogPort ?? this.getValueInt("syslogPort", DEFAULTS.syslogPort, false)
+    );
   }
 
   get syslogLevel(): string {
-    const value = this.envOverrides.syslogLevel ?? this.getValue("syslogLevel", this.logLevel, false);
+    const value =
+      this.envOverrides.syslogLevel ?? this.getValue("syslogLevel", this.logLevel, false);
     return value.toLowerCase();
   }
 
@@ -424,9 +487,16 @@ export class ConfigFileProvider {
     return value.trim().toLowerCase() === "true";
   }
 
-  private getValueEnum<T extends string>(allowed: readonly T[], key: string, defaultValue: T, persist = true): T {
+  private getValueEnum<T extends string>(
+    allowed: readonly T[],
+    key: string,
+    defaultValue: T,
+    persist = true
+  ): T {
     const value = this.getValue(key, defaultValue, persist);
-    const match = allowed.find((candidate) => candidate.toLowerCase() === value.trim().toLowerCase());
+    const match = allowed.find(
+      (candidate) => candidate.toLowerCase() === value.trim().toLowerCase()
+    );
     return match ?? defaultValue;
   }
 
@@ -443,8 +513,12 @@ export class ConfigFileProvider {
 
     const fileValues = this.loadConfigFile();
 
-    if (Object.prototype.hasOwnProperty.call(fileValues, key) && fileValues[key] !== undefined && fileValues[key] !== null) {
-      const stringValue = String(fileValues[key]).trim();
+    if (
+      Object.prototype.hasOwnProperty.call(fileValues, key) &&
+      fileValues[key] !== undefined &&
+      fileValues[key] !== null
+    ) {
+      const stringValue = stringifyConfigValue(fileValues[key]).trim();
       this.cache.set(key, stringValue);
       return stringValue;
     }
@@ -526,8 +600,10 @@ export class ConfigFileProvider {
       const nodeErr = err as NodeJS.ErrnoException;
       if (nodeErr && nodeErr.code === "EACCES") {
         throw new AccessDeniedConfigFileError(
-          "Pagarr does not have access to config file: " + this.configFilePath + ". Please fix permissions",
-          err,
+          "Pagarr does not have access to config file: " +
+            this.configFilePath +
+            ". Please fix permissions",
+          err
         );
       }
       throw err;
@@ -535,7 +611,8 @@ export class ConfigFileProvider {
 
     if (!contents.trim()) {
       throw new InvalidConfigFileError(
-        this.configFilePath + " is empty. Please delete the config file and Pagarr will recreate it.",
+        this.configFilePath +
+          " is empty. Please delete the config file and Pagarr will recreate it."
       );
     }
 
@@ -543,7 +620,8 @@ export class ConfigFileProvider {
       const parsed = JSON.parse(contents) as unknown;
       if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
         throw new InvalidConfigFileError(
-          this.configFilePath + " is invalid. Please delete the config file and Pagarr will recreate it.",
+          this.configFilePath +
+            " is invalid. Please delete the config file and Pagarr will recreate it."
         );
       }
       return parsed as Record<string, unknown>;
@@ -552,8 +630,9 @@ export class ConfigFileProvider {
         throw err;
       }
       throw new InvalidConfigFileError(
-        this.configFilePath + " is corrupt or invalid. Please delete the config file and Pagarr will recreate it.",
-        err,
+        this.configFilePath +
+          " is corrupt or invalid. Please delete the config file and Pagarr will recreate it.",
+        err
       );
     }
   }
@@ -570,8 +649,10 @@ export class ConfigFileProvider {
       const nodeErr = err as NodeJS.ErrnoException;
       if (nodeErr && nodeErr.code === "EACCES") {
         throw new AccessDeniedConfigFileError(
-          "Pagarr does not have access to config file: " + this.configFilePath + ". Please fix permissions",
-          err,
+          "Pagarr does not have access to config file: " +
+            this.configFilePath +
+            ". Please fix permissions",
+          err
         );
       }
       throw err;

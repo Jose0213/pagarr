@@ -21,7 +21,11 @@ export class MonitorNewBookService {
    *   date as `DateTime.MinValue`, matching the C# `?? DateTime.MinValue`
    *   fallback via `MaxBy`).
    */
-  shouldMonitorNewBook(addedBook: Book, existingBooks: Book[], monitorNewItems: NewItemMonitorTypes): boolean {
+  shouldMonitorNewBook(
+    addedBook: Book,
+    existingBooks: Book[],
+    monitorNewItems: NewItemMonitorTypes
+  ): boolean {
     if (monitorNewItems === NewItemMonitorTypes.None) {
       return false;
     }

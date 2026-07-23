@@ -3,7 +3,11 @@
 import { HttpUri } from "./HttpUri.js";
 import { HttpRequest } from "./HttpRequest.js";
 import { HttpResponse, TypedHttpResponse } from "./HttpResponse.js";
-import { HttpException, TooManyRequestsException, UnexpectedHtmlContentException } from "./HttpException.js";
+import {
+  HttpException,
+  TooManyRequestsException,
+  UnexpectedHtmlContentException,
+} from "./HttpException.js";
 import { CookieJar } from "./CookieJar.js";
 import type { IHttpRequestInterceptor } from "./IHttpRequestInterceptor.js";
 import type { IHttpDispatcher } from "./dispatchers/IHttpDispatcher.js";
@@ -105,7 +109,8 @@ export class HttpClient implements IHttpClient {
     }
 
     if (!request.suppressHttpError && response.hasHttpError) {
-      const suppressed = request.suppressHttpErrorStatusCodes?.includes(response.statusCode) ?? false;
+      const suppressed =
+        request.suppressHttpErrorStatusCodes?.includes(response.statusCode) ?? false;
 
       if (!suppressed) {
         if (request.logHttpError) {
@@ -243,7 +248,9 @@ export class HttpClient implements IHttpClient {
       const response = await this.get(request);
 
       await new Promise<void>((resolve, reject) => {
-        fileStream.end((err: unknown) => (err ? reject(err) : resolve()));
+        fileStream.end((err: NodeJS.ErrnoException | null | undefined) =>
+          err ? reject(err) : resolve()
+        );
       });
 
       if (response.headers.contentType?.includes("text/html")) {

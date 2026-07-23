@@ -20,14 +20,17 @@ describe("AuthorRepository", () => {
     db.close();
   });
 
-  function insertAuthorWithMetadata(overrides: Partial<Author> = {}, metaOverrides: Record<string, unknown> = {}) {
+  function insertAuthorWithMetadata(
+    overrides: Partial<Author> = {},
+    metaOverrides: Record<string, unknown> = {}
+  ) {
     const meta = metaRepo.insert({
       ...newAuthorMetadata(),
       foreignAuthorId: "fa-1",
       titleSlug: "author-one",
       name: "Author One",
       ...metaOverrides,
-    } as never);
+    });
 
     return repo.insert({
       ...newAuthor(),
@@ -37,7 +40,7 @@ describe("AuthorRepository", () => {
       monitored: true,
       monitorNewItems: NewItemMonitorTypes.All,
       ...overrides,
-    } as Author);
+    });
   }
 
   it("inserts and retrieves a row round-trip via the base repository", () => {
@@ -99,23 +102,39 @@ describe("AuthorRepository", () => {
         foreignAuthorId: "fa-dupe-2",
         titleSlug: "dupe-two",
         name: "Dupe Two",
-      } as never);
-      insertAuthorWithMetadata({ cleanName: "dupename" }, { foreignAuthorId: "fa-dupe-1", titleSlug: "dupe-one" });
+      });
+      insertAuthorWithMetadata(
+        { cleanName: "dupename" },
+        { foreignAuthorId: "fa-dupe-1", titleSlug: "dupe-one" }
+      );
       repo.insert({
         ...newAuthor(),
         authorMetadataId: meta2.id,
         cleanName: "dupename",
         path: "/books/Dupe Two",
-      } as Author);
+      });
 
       expect(repo.findByName("dupename")).toBeUndefined();
     });
   });
 
   it("allAuthorPaths returns every author's id -> path", () => {
-    const a = insertAuthorWithMetadata({ path: "/books/A" }, { foreignAuthorId: "fa-a", titleSlug: "a" });
-    const meta2 = metaRepo.insert({ ...newAuthorMetadata(), foreignAuthorId: "fa-b", titleSlug: "b", name: "B" } as never);
-    const b = repo.insert({ ...newAuthor(), authorMetadataId: meta2.id, cleanName: "b", path: "/books/B" } as Author);
+    const a = insertAuthorWithMetadata(
+      { path: "/books/A" },
+      { foreignAuthorId: "fa-a", titleSlug: "a" }
+    );
+    const meta2 = metaRepo.insert({
+      ...newAuthorMetadata(),
+      foreignAuthorId: "fa-b",
+      titleSlug: "b",
+      name: "B",
+    });
+    const b = repo.insert({
+      ...newAuthor(),
+      authorMetadataId: meta2.id,
+      cleanName: "b",
+      path: "/books/B",
+    });
 
     const paths = repo.allAuthorPaths();
     expect(paths.get(a.id)).toBe("/books/A");
@@ -124,7 +143,10 @@ describe("AuthorRepository", () => {
 
   describe("allAuthorTags", () => {
     it("only includes authors with a non-null Tags column", () => {
-      const withTags = insertAuthorWithMetadata({ tags: [1, 2] }, { foreignAuthorId: "fa-tags", titleSlug: "tags" });
+      const withTags = insertAuthorWithMetadata(
+        { tags: [1, 2] },
+        { foreignAuthorId: "fa-tags", titleSlug: "tags" }
+      );
 
       const tags = repo.allAuthorTags();
       expect(tags.get(withTags.id)).toEqual([1, 2]);
@@ -132,8 +154,18 @@ describe("AuthorRepository", () => {
   });
 
   it("getAuthorByMetadataId finds the author linked to a given metadata id, with metadata populated", () => {
-    const meta = metaRepo.insert({ ...newAuthorMetadata(), foreignAuthorId: "fa-x", titleSlug: "x", name: "X" } as never);
-    const author = repo.insert({ ...newAuthor(), authorMetadataId: meta.id, cleanName: "x", path: "/books/X" } as Author);
+    const meta = metaRepo.insert({
+      ...newAuthorMetadata(),
+      foreignAuthorId: "fa-x",
+      titleSlug: "x",
+      name: "X",
+    });
+    const author = repo.insert({
+      ...newAuthor(),
+      authorMetadataId: meta.id,
+      cleanName: "x",
+      path: "/books/X",
+    });
 
     const found = repo.getAuthorByMetadataId(meta.id);
     expect(found?.id).toBe(author.id);
@@ -143,10 +175,30 @@ describe("AuthorRepository", () => {
   });
 
   it("getAuthorsByMetadataId returns all matching authors, with metadata populated", () => {
-    const meta1 = metaRepo.insert({ ...newAuthorMetadata(), foreignAuthorId: "fa-1", titleSlug: "one", name: "One" } as never);
-    const meta2 = metaRepo.insert({ ...newAuthorMetadata(), foreignAuthorId: "fa-2", titleSlug: "two", name: "Two" } as never);
-    const a1 = repo.insert({ ...newAuthor(), authorMetadataId: meta1.id, cleanName: "one", path: "/books/One" } as Author);
-    const a2 = repo.insert({ ...newAuthor(), authorMetadataId: meta2.id, cleanName: "two", path: "/books/Two" } as Author);
+    const meta1 = metaRepo.insert({
+      ...newAuthorMetadata(),
+      foreignAuthorId: "fa-1",
+      titleSlug: "one",
+      name: "One",
+    });
+    const meta2 = metaRepo.insert({
+      ...newAuthorMetadata(),
+      foreignAuthorId: "fa-2",
+      titleSlug: "two",
+      name: "Two",
+    });
+    const a1 = repo.insert({
+      ...newAuthor(),
+      authorMetadataId: meta1.id,
+      cleanName: "one",
+      path: "/books/One",
+    });
+    const a2 = repo.insert({
+      ...newAuthor(),
+      authorMetadataId: meta2.id,
+      cleanName: "two",
+      path: "/books/Two",
+    });
 
     const found = repo.getAuthorsByMetadataId([meta1.id, meta2.id]);
     expect(found.map((a) => a.id).sort()).toEqual([a1.id, a2.id].sort());
@@ -157,8 +209,18 @@ describe("AuthorRepository", () => {
 
   it("allWithMetadata returns every author with metadata populated", () => {
     insertAuthorWithMetadata({}, { foreignAuthorId: "fa-1", titleSlug: "one" });
-    const meta2 = metaRepo.insert({ ...newAuthorMetadata(), foreignAuthorId: "fa-2", titleSlug: "two", name: "Two" } as never);
-    repo.insert({ ...newAuthor(), authorMetadataId: meta2.id, cleanName: "two", path: "/books/Two" } as Author);
+    const meta2 = metaRepo.insert({
+      ...newAuthorMetadata(),
+      foreignAuthorId: "fa-2",
+      titleSlug: "two",
+      name: "Two",
+    });
+    repo.insert({
+      ...newAuthor(),
+      authorMetadataId: meta2.id,
+      cleanName: "two",
+      path: "/books/Two",
+    });
 
     const all = repo.allWithMetadata();
     expect(all).toHaveLength(2);

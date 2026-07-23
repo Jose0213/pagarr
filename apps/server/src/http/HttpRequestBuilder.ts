@@ -32,12 +32,7 @@ export class HttpRequestBuilder {
 
   constructor(baseUrl: string);
   constructor(useHttps: boolean, host: string, port: number, urlBase?: string);
-  constructor(
-    baseUrlOrHttps: string | boolean,
-    host?: string,
-    port?: number,
-    urlBase?: string
-  ) {
+  constructor(baseUrlOrHttps: string | boolean, host?: string, port?: number, urlBase?: string) {
     if (typeof baseUrlOrHttps === "string") {
       this.baseUrl = new HttpUri(baseUrlOrHttps);
     } else {
@@ -59,7 +54,8 @@ export class HttpRequestBuilder {
   }
 
   clone(): HttpRequestBuilder {
-    const clone = Object.create(Object.getPrototypeOf(this)) as HttpRequestBuilder;
+    const prototype: object = Object.getPrototypeOf(this) as object;
+    const clone = Object.create(prototype) as HttpRequestBuilder;
     Object.assign(clone, this);
     clone.queryParams = [...this.queryParams];
     clone.suffixQueryParams = [...this.suffixQueryParams];

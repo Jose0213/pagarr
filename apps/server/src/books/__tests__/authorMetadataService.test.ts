@@ -21,7 +21,13 @@ describe("AuthorMetadataService", () => {
   });
 
   function meta(overrides: Partial<AuthorMetadata> = {}): AuthorMetadata {
-    return { ...newAuthorMetadata(), foreignAuthorId: "fa-1", titleSlug: "s", name: "N", ...overrides } as AuthorMetadata;
+    return {
+      ...newAuthorMetadata(),
+      foreignAuthorId: "fa-1",
+      titleSlug: "s",
+      name: "N",
+      ...overrides,
+    };
   }
 
   it("upsert delegates to upsertMany([author])", () => {
@@ -31,7 +37,10 @@ describe("AuthorMetadataService", () => {
   });
 
   it("upsertMany delegates straight through to the repository", () => {
-    const changed = service.upsertMany([meta({ foreignAuthorId: "fa-1" }), meta({ foreignAuthorId: "fa-2", titleSlug: "s2" })]);
+    const changed = service.upsertMany([
+      meta({ foreignAuthorId: "fa-1" }),
+      meta({ foreignAuthorId: "fa-2", titleSlug: "s2" }),
+    ]);
     expect(changed).toBe(true);
     expect(repo.count()).toBe(2);
   });

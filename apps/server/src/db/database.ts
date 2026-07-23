@@ -66,8 +66,7 @@ export class Database implements IDatabase {
 
   version(): string {
     const row = this.db.prepare("SELECT sqlite_version() AS version").get() as
-      | { version: string }
-      | undefined;
+      { version: string } | undefined;
     return row?.version ?? "";
   }
 
@@ -84,7 +83,7 @@ export class Database implements IDatabase {
     } catch (e) {
       // Ported behavior: C# logs and swallows vacuum failures rather than
       // propagating them (Database.cs catches Exception around Vacuum()).
-      // eslint-disable-next-line no-console
+
       console.error(`An error occurred while vacuuming ${this.name} database.`, e);
     }
   }

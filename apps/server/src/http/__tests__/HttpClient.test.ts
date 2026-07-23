@@ -19,7 +19,13 @@ function fakeDispatcher(responses: HttpResponse[]): IHttpDispatcher {
       }
       // Ensure the returned response's `request` field reflects the request
       // actually passed in for this call (mirrors real dispatcher behavior).
-      return new HttpResponse(request, response.headers, response.responseData, response.statusCode, response.version);
+      return new HttpResponse(
+        request,
+        response.headers,
+        response.responseData,
+        response.statusCode,
+        response.version
+      );
     }),
   };
 }
@@ -31,7 +37,12 @@ function noRateLimit() {
 describe("HttpClient", () => {
   it("returns a successful response as-is", async () => {
     const dispatcher = fakeDispatcher([
-      new HttpResponse(new HttpRequest("https://api.example.com/books"), new HttpHeader(), '{"ok":true}', 200),
+      new HttpResponse(
+        new HttpRequest("https://api.example.com/books"),
+        new HttpHeader(),
+        '{"ok":true}',
+        200
+      ),
     ]);
     const client = new HttpClient([], noRateLimit(), dispatcher);
 
@@ -44,7 +55,12 @@ describe("HttpClient", () => {
 
   it("throws HttpException on a 4xx/5xx response by default", async () => {
     const dispatcher = fakeDispatcher([
-      new HttpResponse(new HttpRequest("https://api.example.com/books"), new HttpHeader(), "nope", 404),
+      new HttpResponse(
+        new HttpRequest("https://api.example.com/books"),
+        new HttpHeader(),
+        "nope",
+        404
+      ),
     ]);
     const client = new HttpClient([], noRateLimit(), dispatcher);
 
@@ -55,7 +71,12 @@ describe("HttpClient", () => {
 
   it("suppresses the error when suppressHttpError is set", async () => {
     const dispatcher = fakeDispatcher([
-      new HttpResponse(new HttpRequest("https://api.example.com/books"), new HttpHeader(), "nope", 404),
+      new HttpResponse(
+        new HttpRequest("https://api.example.com/books"),
+        new HttpHeader(),
+        "nope",
+        404
+      ),
     ]);
     const client = new HttpClient([], noRateLimit(), dispatcher);
 
@@ -68,7 +89,12 @@ describe("HttpClient", () => {
 
   it("suppresses only the listed status codes via suppressHttpErrorStatusCodes", async () => {
     const dispatcher = fakeDispatcher([
-      new HttpResponse(new HttpRequest("https://api.example.com/books"), new HttpHeader(), "nope", 404),
+      new HttpResponse(
+        new HttpRequest("https://api.example.com/books"),
+        new HttpHeader(),
+        "nope",
+        404
+      ),
     ]);
     const client = new HttpClient([], noRateLimit(), dispatcher);
 
@@ -98,7 +124,12 @@ describe("HttpClient", () => {
 
     const dispatcher = fakeDispatcher([
       new HttpResponse(new HttpRequest("https://api.example.com/books"), redirectHeaders, "", 302),
-      new HttpResponse(new HttpRequest("https://api.example.com/books/final"), new HttpHeader(), "done", 200),
+      new HttpResponse(
+        new HttpRequest("https://api.example.com/books/final"),
+        new HttpHeader(),
+        "done",
+        200
+      ),
     ]);
     const client = new HttpClient([], noRateLimit(), dispatcher);
 
@@ -118,7 +149,12 @@ describe("HttpClient", () => {
 
     const dispatcher = fakeDispatcher([
       new HttpResponse(new HttpRequest("https://api.example.com/books"), redirectHeaders, "", 303),
-      new HttpResponse(new HttpRequest("https://api.example.com/books/final"), new HttpHeader(), "done", 200),
+      new HttpResponse(
+        new HttpRequest("https://api.example.com/books/final"),
+        new HttpHeader(),
+        "done",
+        200
+      ),
     ]);
     const client = new HttpClient([], noRateLimit(), dispatcher);
 
@@ -139,7 +175,8 @@ describe("HttpClient", () => {
 
     const responses = Array.from(
       { length: 8 },
-      () => new HttpResponse(new HttpRequest("https://api.example.com/loop"), redirectHeaders, "", 302)
+      () =>
+        new HttpResponse(new HttpRequest("https://api.example.com/loop"), redirectHeaders, "", 302)
     );
     const dispatcher = fakeDispatcher(responses);
     const client = new HttpClient([], noRateLimit(), dispatcher);
@@ -152,7 +189,12 @@ describe("HttpClient", () => {
 
   it("runs request interceptors' preRequest/postResponse", async () => {
     const dispatcher = fakeDispatcher([
-      new HttpResponse(new HttpRequest("https://api.example.com/books"), new HttpHeader(), "ok", 200),
+      new HttpResponse(
+        new HttpRequest("https://api.example.com/books"),
+        new HttpHeader(),
+        "ok",
+        200
+      ),
     ]);
 
     const seenRequests: string[] = [];
@@ -212,7 +254,12 @@ describe("HttpClient", () => {
 
   it("waits on the rate limiter when request.rateLimit is set", async () => {
     const dispatcher = fakeDispatcher([
-      new HttpResponse(new HttpRequest("https://api.example.com/books"), new HttpHeader(), "ok", 200),
+      new HttpResponse(
+        new HttpRequest("https://api.example.com/books"),
+        new HttpHeader(),
+        "ok",
+        200
+      ),
     ]);
 
     const waitAndPulse = vi.fn(async () => {});
@@ -230,7 +277,12 @@ describe("HttpClient", () => {
 
   it("does not call the rate limiter when request.rateLimit is 0", async () => {
     const dispatcher = fakeDispatcher([
-      new HttpResponse(new HttpRequest("https://api.example.com/books"), new HttpHeader(), "ok", 200),
+      new HttpResponse(
+        new HttpRequest("https://api.example.com/books"),
+        new HttpHeader(),
+        "ok",
+        200
+      ),
     ]);
 
     const waitAndPulse = vi.fn(async () => {});

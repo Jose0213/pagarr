@@ -5,7 +5,15 @@ import { BookRepository } from "../bookRepository.js";
 import { AuthorRepository } from "../authorRepository.js";
 import { AuthorMetadataRepository } from "../authorMetadataRepository.js";
 import type { MainDatabase } from "../../db/db-factory.js";
-import { newAuthor, newAuthorMetadata, newBook, newEdition, type Author, type Book, type Edition } from "../models.js";
+import {
+  newAuthor,
+  newAuthorMetadata,
+  newBook,
+  newEdition,
+  type Author,
+  type Book,
+  type Edition,
+} from "../models.js";
 
 describe("EditionRepository", () => {
   let db: MainDatabase;
@@ -32,13 +40,13 @@ describe("EditionRepository", () => {
       foreignAuthorId,
       titleSlug: `slug-${foreignAuthorId}`,
       name: `Author ${foreignAuthorId}`,
-    } as never);
+    });
     return authorRepo.insert({
       ...newAuthor(),
       authorMetadataId: meta.id,
       cleanName: `author${foreignAuthorId}`,
       path: `/books/${foreignAuthorId}`,
-    } as Author);
+    });
   }
 
   function insertBook(authorMetadataId: number, overrides: Partial<Book> = {}): Book {
@@ -51,7 +59,7 @@ describe("EditionRepository", () => {
       cleanTitle: overrides.cleanTitle ?? "abook",
       anyEditionOk: overrides.anyEditionOk ?? false,
       ...overrides,
-    } as Book);
+    });
   }
 
   function insertEdition(bookId: number, overrides: Partial<Edition> = {}): Edition {
@@ -63,7 +71,7 @@ describe("EditionRepository", () => {
       title: overrides.title ?? "Edition",
       monitored: overrides.monitored ?? false,
       ...overrides,
-    } as Edition);
+    });
   }
 
   it("round-trips overview default (empty string, not null)", () => {

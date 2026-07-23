@@ -82,7 +82,11 @@ export class HttpResponse {
     let result = `Res: HTTP/${this.version} [${this.request.method}] ${this.request.url.toString()}: ${this.statusCode} (${this.responseData?.length ?? 0} bytes)`;
 
     const contentType = this.headers.contentType;
-    if (this.hasHttpError && isNotNullOrWhiteSpace(contentType) && contentType.toLowerCase() !== "text/html") {
+    if (
+      this.hasHttpError &&
+      isNotNullOrWhiteSpace(contentType) &&
+      contentType.toLowerCase() !== "text/html"
+    ) {
       result += "\n" + this.content;
     }
 
@@ -99,7 +103,13 @@ export class TypedHttpResponse<T> extends HttpResponse {
   readonly resource: T;
 
   constructor(response: HttpResponse) {
-    super(response.request, response.headers, response.responseData, response.statusCode, response.version);
+    super(
+      response.request,
+      response.headers,
+      response.responseData,
+      response.statusCode,
+      response.version
+    );
     this.resource = JSON.parse(response.content) as T;
   }
 }

@@ -63,14 +63,17 @@ describe("AuthorService", () => {
     db.close();
   });
 
-  function insertAuthorWithMetadata(overrides: Partial<Author> = {}, metaOverrides: Partial<AuthorMetadata> = {}) {
+  function insertAuthorWithMetadata(
+    overrides: Partial<Author> = {},
+    metaOverrides: Partial<AuthorMetadata> = {}
+  ) {
     const meta = metaRepo.insert({
       ...newAuthorMetadata(),
       foreignAuthorId: "fa-1",
       titleSlug: "author-one",
       name: "Author One",
       ...metaOverrides,
-    } as AuthorMetadata);
+    });
 
     return authorRepo.insert({
       ...newAuthor(),
@@ -79,13 +82,23 @@ describe("AuthorService", () => {
       path: "/books/Author One",
       monitored: true,
       ...overrides,
-    } as Author);
+    });
   }
 
   describe("addAuthor / addAuthors", () => {
     it("inserts and publishes AuthorAddedEvent with the doRefresh flag", () => {
-      const meta = metaRepo.insert({ ...newAuthorMetadata(), foreignAuthorId: "fa-1", titleSlug: "s", name: "N" } as AuthorMetadata);
-      const author = { ...newAuthor(), authorMetadataId: meta.id, cleanName: "n", path: "/books/N" } as Author;
+      const meta = metaRepo.insert({
+        ...newAuthorMetadata(),
+        foreignAuthorId: "fa-1",
+        titleSlug: "s",
+        name: "N",
+      });
+      const author = {
+        ...newAuthor(),
+        authorMetadataId: meta.id,
+        cleanName: "n",
+        path: "/books/N",
+      };
 
       const inserted = service.addAuthor(author, true);
 
@@ -96,13 +109,23 @@ describe("AuthorService", () => {
     });
 
     it("addAuthors inserts many and publishes a single AuthorsImportedEvent", () => {
-      const meta1 = metaRepo.insert({ ...newAuthorMetadata(), foreignAuthorId: "fa-1", titleSlug: "s1", name: "N1" } as AuthorMetadata);
-      const meta2 = metaRepo.insert({ ...newAuthorMetadata(), foreignAuthorId: "fa-2", titleSlug: "s2", name: "N2" } as AuthorMetadata);
+      const meta1 = metaRepo.insert({
+        ...newAuthorMetadata(),
+        foreignAuthorId: "fa-1",
+        titleSlug: "s1",
+        name: "N1",
+      });
+      const meta2 = metaRepo.insert({
+        ...newAuthorMetadata(),
+        foreignAuthorId: "fa-2",
+        titleSlug: "s2",
+        name: "N2",
+      });
 
       const inserted = service.addAuthors(
         [
-          { ...newAuthor(), authorMetadataId: meta1.id, cleanName: "n1", path: "/books/N1" } as Author,
-          { ...newAuthor(), authorMetadataId: meta2.id, cleanName: "n2", path: "/books/N2" } as Author,
+          { ...newAuthor(), authorMetadataId: meta1.id, cleanName: "n1", path: "/books/N1" },
+          { ...newAuthor(), authorMetadataId: meta2.id, cleanName: "n2", path: "/books/N2" },
         ],
         false
       );
@@ -162,7 +185,12 @@ describe("AuthorService", () => {
 
   it("removeAddOptions sets only the addOptions field", () => {
     const author = insertAuthorWithMetadata({
-      addOptions: { monitor: "All", booksToMonitor: [], monitored: true, searchForMissingBooks: true } as never,
+      addOptions: {
+        monitor: "All",
+        booksToMonitor: [],
+        monitored: true,
+        searchForMissingBooks: true,
+      } as never,
     });
 
     service.removeAddOptions({ ...author, addOptions: undefined });
@@ -173,13 +201,23 @@ describe("AuthorService", () => {
   describe("updateAuthor", () => {
     it("never persists a caller-supplied addOptions -- keeps the stored value", () => {
       const author = insertAuthorWithMetadata({
-        addOptions: { monitor: "All", booksToMonitor: [], monitored: true, searchForMissingBooks: false } as never,
+        addOptions: {
+          monitor: "All",
+          booksToMonitor: [],
+          monitored: true,
+          searchForMissingBooks: false,
+        } as never,
       });
 
       const updated = service.updateAuthor({
         ...author,
         path: "/books/New Path",
-        addOptions: { monitor: "None", booksToMonitor: [], monitored: false, searchForMissingBooks: true } as never,
+        addOptions: {
+          monitor: "None",
+          booksToMonitor: [],
+          monitored: false,
+          searchForMissingBooks: true,
+        } as never,
       });
 
       expect(updated.path).toBe("/books/New Path");
@@ -189,8 +227,14 @@ describe("AuthorService", () => {
   });
 
   it("updateAuthors recomputes Path via the injected buildPath callback only when rootFolderPath is set", () => {
-    const a = insertAuthorWithMetadata({ rootFolderPath: "/books", path: "/old/path" }, { foreignAuthorId: "fa-1", titleSlug: "s1" });
-    const b = insertAuthorWithMetadata({ rootFolderPath: "", path: "/unchanged" }, { foreignAuthorId: "fa-2", titleSlug: "s2" });
+    const a = insertAuthorWithMetadata(
+      { rootFolderPath: "/books", path: "/old/path" },
+      { foreignAuthorId: "fa-1", titleSlug: "s1" }
+    );
+    const b = insertAuthorWithMetadata(
+      { rootFolderPath: "", path: "/unchanged" },
+      { foreignAuthorId: "fa-2", titleSlug: "s2" }
+    );
 
     const buildPath = (author: Author) => `/computed/${author.id}`;
 
@@ -207,8 +251,14 @@ describe("AuthorService", () => {
       const exactMatcher = new ExactOnlyTextMatcher();
       const svc = new AuthorService(authorRepo, events, exactMatcher);
 
-      insertAuthorWithMetadata({}, { foreignAuthorId: "fa-1", titleSlug: "s1", name: "Exact Name" });
-      insertAuthorWithMetadata({ cleanName: "other" }, { foreignAuthorId: "fa-2", titleSlug: "s2", name: "Other Name" });
+      insertAuthorWithMetadata(
+        {},
+        { foreignAuthorId: "fa-1", titleSlug: "s1", name: "Exact Name" }
+      );
+      insertAuthorWithMetadata(
+        { cleanName: "other" },
+        { foreignAuthorId: "fa-2", titleSlug: "s2", name: "Other Name" }
+      );
 
       const found = svc.findByNameInexact("Exact Name");
       expect(found?.metadata?.name).toBe("Exact Name");
@@ -225,7 +275,10 @@ describe("AuthorService", () => {
       const exactMatcher = new ExactOnlyTextMatcher();
       const svc = new AuthorService(authorRepo, events, exactMatcher);
 
-      insertAuthorWithMetadata({}, { foreignAuthorId: "fa-1", titleSlug: "s1", name: "Match Me", nameLastFirst: "Match Me" });
+      insertAuthorWithMetadata(
+        {},
+        { foreignAuthorId: "fa-1", titleSlug: "s1", name: "Match Me", nameLastFirst: "Match Me" }
+      );
 
       const candidates = svc.getCandidates("Match Me");
       // Both scoring functions (name, nameLastFirst) match the same author --

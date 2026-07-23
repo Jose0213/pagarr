@@ -49,7 +49,9 @@ export interface BookLookup {
 
 export interface EditionLookup {
   /** Ported from IEditionService.GetEditionsByAuthor(int authorId), grouped by BookId in the C# caller. */
-  getEditionsByAuthor(authorId: number): { bookForeignBookId: string; edition: LocalBook["editions"][number] }[];
+  getEditionsByAuthor(
+    authorId: number
+  ): { bookForeignBookId: string; edition: LocalBook["editions"][number] }[];
 }
 
 export interface MediaFileLookup {
@@ -219,7 +221,9 @@ export class MetadataProfileService {
     if (dbAuthor) {
       localBooks = this.bookService.getBooksByAuthorMetadataId(dbAuthor.authorMetadataId);
       const editionsByBook = new Map<string, LocalBook["editions"]>();
-      for (const { bookForeignBookId, edition } of this.editionService.getEditionsByAuthor(dbAuthor.id)) {
+      for (const { bookForeignBookId, edition } of this.editionService.getEditionsByAuthor(
+        dbAuthor.id
+      )) {
         const existing = editionsByBook.get(bookForeignBookId) ?? [];
         existing.push(edition);
         editionsByBook.set(bookForeignBookId, existing);
@@ -305,7 +309,9 @@ export class MetadataProfileService {
       (x) => x.foreignBookId,
       localHash,
       profile,
-      (x, p) => x.editions.some((e) => e.pageCount > p.minPages) || x.editions.every((e) => e.pageCount === 0)
+      (x, p) =>
+        x.editions.some((e) => e.pageCount > p.minPages) ||
+        x.editions.every((e) => e.pageCount === 0)
     );
     this.filterByPredicate(
       remaining,
@@ -348,7 +354,8 @@ export class MetadataProfileService {
       (x) => x.foreignEditionId,
       localHash,
       profile,
-      (x) => allowedLanguages.size === 0 || allowedLanguages.has(this.canonicalizeLanguage(x.language))
+      (x) =>
+        allowedLanguages.size === 0 || allowedLanguages.has(this.canonicalizeLanguage(x.language))
     );
     this.filterByPredicate(
       remaining,

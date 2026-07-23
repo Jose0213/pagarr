@@ -6,7 +6,14 @@ import { BookRepository } from "../bookRepository.js";
 import { AuthorRepository } from "../authorRepository.js";
 import { AuthorMetadataRepository } from "../authorMetadataRepository.js";
 import type { MainDatabase } from "../../db/db-factory.js";
-import { newAuthor, newAuthorMetadata, newBook, type Author, type Book, type Series } from "../models.js";
+import {
+  newAuthor,
+  newAuthorMetadata,
+  newBook,
+  type Author,
+  type Book,
+  type Series,
+} from "../models.js";
 
 describe("SeriesRepository / SeriesBookLinkRepository", () => {
   let db: MainDatabase;
@@ -35,13 +42,13 @@ describe("SeriesRepository / SeriesBookLinkRepository", () => {
       foreignAuthorId,
       titleSlug: `slug-${foreignAuthorId}`,
       name: `Author ${foreignAuthorId}`,
-    } as never);
+    });
     return authorRepo.insert({
       ...newAuthor(),
       authorMetadataId: meta.id,
       cleanName: `author${foreignAuthorId}`,
       path: `/books/${foreignAuthorId}`,
-    } as Author);
+    });
   }
 
   function insertBook(authorMetadataId: number, overrides: Partial<Book> = {}): Book {
@@ -53,7 +60,7 @@ describe("SeriesRepository / SeriesBookLinkRepository", () => {
       title: overrides.title ?? "A Book",
       cleanTitle: overrides.cleanTitle ?? "abook",
       ...overrides,
-    } as Book);
+    });
   }
 
   function insertSeries(overrides: Partial<Series> = {}): Series {
@@ -66,7 +73,7 @@ describe("SeriesRepository / SeriesBookLinkRepository", () => {
       primaryWorkCount: 1,
       id: 0,
       ...overrides,
-    } as Series);
+    });
   }
 
   describe("SeriesRepository", () => {
@@ -91,8 +98,22 @@ describe("SeriesRepository / SeriesBookLinkRepository", () => {
       const book2 = insertBook(author.authorMetadataId);
       const series = insertSeries();
 
-      linkRepo.insert({ seriesId: series.id, bookId: book1.id, position: "1", seriesPosition: 1, isPrimary: true, id: 0 } as never);
-      linkRepo.insert({ seriesId: series.id, bookId: book2.id, position: "2", seriesPosition: 2, isPrimary: false, id: 0 } as never);
+      linkRepo.insert({
+        seriesId: series.id,
+        bookId: book1.id,
+        position: "1",
+        seriesPosition: 1,
+        isPrimary: true,
+        id: 0,
+      });
+      linkRepo.insert({
+        seriesId: series.id,
+        bookId: book2.id,
+        position: "2",
+        seriesPosition: 2,
+        isPrimary: false,
+        id: 0,
+      });
 
       const byMeta = seriesRepo.getByAuthorMetadataId(author.authorMetadataId);
       expect(byMeta.map((s) => s.id)).toEqual([series.id]);
@@ -107,7 +128,14 @@ describe("SeriesRepository / SeriesBookLinkRepository", () => {
       const author = insertAuthor();
       const book = insertBook(author.authorMetadataId);
       const series = insertSeries();
-      const link = linkRepo.insert({ seriesId: series.id, bookId: book.id, position: "1", seriesPosition: 1, isPrimary: true, id: 0 } as never);
+      const link = linkRepo.insert({
+        seriesId: series.id,
+        bookId: book.id,
+        position: "1",
+        seriesPosition: 1,
+        isPrimary: true,
+        id: 0,
+      });
 
       expect(linkRepo.getLinksBySeries(series.id).map((l) => l.id)).toEqual([link.id]);
     });
@@ -119,8 +147,22 @@ describe("SeriesRepository / SeriesBookLinkRepository", () => {
       const otherBook = insertBook(otherAuthor.authorMetadataId);
       const series = insertSeries();
 
-      const link = linkRepo.insert({ seriesId: series.id, bookId: book.id, position: "1", seriesPosition: 1, isPrimary: true, id: 0 } as never);
-      linkRepo.insert({ seriesId: series.id, bookId: otherBook.id, position: "2", seriesPosition: 2, isPrimary: false, id: 0 } as never);
+      const link = linkRepo.insert({
+        seriesId: series.id,
+        bookId: book.id,
+        position: "1",
+        seriesPosition: 1,
+        isPrimary: true,
+        id: 0,
+      });
+      linkRepo.insert({
+        seriesId: series.id,
+        bookId: otherBook.id,
+        position: "2",
+        seriesPosition: 2,
+        isPrimary: false,
+        id: 0,
+      });
 
       const found = linkRepo.getLinksBySeriesAndAuthor(series.id, "fa-target");
       expect(found.map((l) => l.id)).toEqual([link.id]);
@@ -130,7 +172,14 @@ describe("SeriesRepository / SeriesBookLinkRepository", () => {
       const author = insertAuthor();
       const book = insertBook(author.authorMetadataId);
       const series = insertSeries({ title: "The Series" });
-      const link = linkRepo.insert({ seriesId: series.id, bookId: book.id, position: "1", seriesPosition: 1, isPrimary: true, id: 0 } as never);
+      const link = linkRepo.insert({
+        seriesId: series.id,
+        bookId: book.id,
+        position: "1",
+        seriesPosition: 1,
+        isPrimary: true,
+        id: 0,
+      });
 
       const found = linkRepo.getLinksByBook([book.id]);
       expect(found).toHaveLength(1);

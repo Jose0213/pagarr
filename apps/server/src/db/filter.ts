@@ -43,7 +43,8 @@ export interface FilterOr<TModel> {
   or: FilterExpression<TModel>[];
 }
 
-export type FilterExpression<TModel> = FilterCondition<TModel> | FilterAnd<TModel> | FilterOr<TModel>;
+export type FilterExpression<TModel> =
+  FilterCondition<TModel> | FilterAnd<TModel> | FilterOr<TModel>;
 
 export function isCondition<TModel>(
   expr: FilterExpression<TModel>

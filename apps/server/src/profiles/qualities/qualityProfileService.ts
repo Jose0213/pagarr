@@ -2,7 +2,18 @@ import type { CustomFormat } from "../customFormat.js";
 import type { ProfileFormatItem } from "../profileFormatItem.js";
 import type { Quality } from "../../qualities/quality.js";
 import { QualityProfileInUseException } from "../errors.js";
-import { ALL_QUALITIES, DEFAULT_QUALITY_DEFINITIONS, QUALITY_MOBI, QUALITY_EPUB, QUALITY_AZW3, QUALITY_MP3, QUALITY_M4B, QUALITY_FLAC, QUALITY_UNKNOWN, QUALITY_UNKNOWN_AUDIO } from "./qualityDefaults.js";
+import {
+  ALL_QUALITIES,
+  DEFAULT_QUALITY_DEFINITIONS,
+  QUALITY_MOBI,
+  QUALITY_EPUB,
+  QUALITY_AZW3,
+  QUALITY_MP3,
+  QUALITY_M4B,
+  QUALITY_FLAC,
+  QUALITY_UNKNOWN,
+  QUALITY_UNKNOWN_AUDIO,
+} from "./qualityDefaults.js";
 import { newQualityProfile, type QualityProfile } from "./qualityProfile.js";
 import { newQualityItem, type QualityProfileQualityItem } from "./qualityProfileQualityItem.js";
 import type { QualityProfileRepository } from "./qualityProfileRepository.js";
@@ -171,7 +182,11 @@ export class QualityProfileService {
    * containing group's synthetic id (starting at 1000, incrementing per
    * group) -- exactly mirroring the C# groupId bookkeeping.
    */
-  getDefaultProfile(name: string, cutoff: Quality | null = null, ...allowed: Quality[]): QualityProfile {
+  getDefaultProfile(
+    name: string,
+    cutoff: Quality | null = null,
+    ...allowed: Quality[]
+  ): QualityProfile {
     const groups = groupByWeight(DEFAULT_QUALITY_DEFINITIONS);
     const items: QualityProfileQualityItem[] = [];
     let groupId = 1000;

@@ -8,7 +8,14 @@ import { AuthorRepository } from "../authorRepository.js";
 import { AuthorMetadataRepository } from "../authorMetadataRepository.js";
 import type { MainDatabase } from "../../db/db-factory.js";
 import { BookDeletedEvent } from "../events.js";
-import { newAuthor, newAuthorMetadata, newBook, type Author, type Book, type Series } from "../models.js";
+import {
+  newAuthor,
+  newAuthorMetadata,
+  newBook,
+  type Author,
+  type Book,
+  type Series,
+} from "../models.js";
 
 describe("SeriesBookLinkService", () => {
   let db: MainDatabase;
@@ -34,12 +41,29 @@ describe("SeriesBookLinkService", () => {
   });
 
   function insertAuthor(): Author {
-    const meta = metaRepo.insert({ ...newAuthorMetadata(), foreignAuthorId: "fa-1", titleSlug: "s", name: "N" } as never);
-    return authorRepo.insert({ ...newAuthor(), authorMetadataId: meta.id, cleanName: "n", path: "/books/N" } as Author);
+    const meta = metaRepo.insert({
+      ...newAuthorMetadata(),
+      foreignAuthorId: "fa-1",
+      titleSlug: "s",
+      name: "N",
+    });
+    return authorRepo.insert({
+      ...newAuthor(),
+      authorMetadataId: meta.id,
+      cleanName: "n",
+      path: "/books/N",
+    });
   }
 
   function insertBook(authorMetadataId: number): Book {
-    return bookRepo.insert({ ...newBook(), authorMetadataId, foreignBookId: "fb-1", titleSlug: "t", title: "T", cleanTitle: "t" } as Book);
+    return bookRepo.insert({
+      ...newBook(),
+      authorMetadataId,
+      foreignBookId: "fb-1",
+      titleSlug: "t",
+      title: "T",
+      cleanTitle: "t",
+    });
   }
 
   function insertSeries(): Series {
@@ -51,17 +75,26 @@ describe("SeriesBookLinkService", () => {
       workCount: 1,
       primaryWorkCount: 1,
       id: 0,
-    } as Series);
+    });
   }
 
   it("getLinksBySeries / getLinksBySeriesAndAuthor / getLinksByBook delegate straight through", () => {
     const author = insertAuthor();
     const book = insertBook(author.authorMetadataId);
     const series = insertSeries();
-    const link = linkRepo.insert({ seriesId: series.id, bookId: book.id, position: "1", seriesPosition: 1, isPrimary: true, id: 0 } as never);
+    const link = linkRepo.insert({
+      seriesId: series.id,
+      bookId: book.id,
+      position: "1",
+      seriesPosition: 1,
+      isPrimary: true,
+      id: 0,
+    });
 
     expect(service.getLinksBySeries(series.id).map((l) => l.id)).toEqual([link.id]);
-    expect(service.getLinksBySeriesAndAuthor(series.id, "fa-1").map((l) => l.id)).toEqual([link.id]);
+    expect(service.getLinksBySeriesAndAuthor(series.id, "fa-1").map((l) => l.id)).toEqual([
+      link.id,
+    ]);
     expect(service.getLinksByBook([book.id]).map((l) => l.id)).toEqual([link.id]);
   });
 
@@ -70,7 +103,16 @@ describe("SeriesBookLinkService", () => {
     const book = insertBook(author.authorMetadataId);
     const series = insertSeries();
 
-    service.insertMany([{ seriesId: series.id, bookId: book.id, position: "1", seriesPosition: 1, isPrimary: true, id: 0 } as never]);
+    service.insertMany([
+      {
+        seriesId: series.id,
+        bookId: book.id,
+        position: "1",
+        seriesPosition: 1,
+        isPrimary: true,
+        id: 0,
+      },
+    ]);
     expect(linkRepo.count()).toBe(1);
 
     const [link] = linkRepo.all();
@@ -85,7 +127,14 @@ describe("SeriesBookLinkService", () => {
     const author = insertAuthor();
     const book = insertBook(author.authorMetadataId);
     const series = insertSeries();
-    linkRepo.insert({ seriesId: series.id, bookId: book.id, position: "1", seriesPosition: 1, isPrimary: true, id: 0 } as never);
+    linkRepo.insert({
+      seriesId: series.id,
+      bookId: book.id,
+      position: "1",
+      seriesPosition: 1,
+      isPrimary: true,
+      id: 0,
+    });
 
     service.handleBookDeleted(new BookDeletedEvent(book, false, false));
 

@@ -187,7 +187,7 @@ export function languageToString(language: Language): string {
  */
 export function languageEquals(
   left: Language | null | undefined,
-  right: Language | null | undefined,
+  right: Language | null | undefined
 ): boolean {
   if (left == null || right == null) {
     return left == null && right == null;

@@ -70,7 +70,9 @@ export class AuthorService {
     // _cache.Clear() -- no-op, see module doc comment.
     const author = this.authorRepository.get(authorId);
     this.authorRepository.delete(authorId);
-    this.eventAggregator.publishEvent(new AuthorDeletedEvent(author, deleteFiles, addImportListExclusion));
+    this.eventAggregator.publishEvent(
+      new AuthorDeletedEvent(author, deleteFiles, addImportListExclusion)
+    );
   }
 
   findById(foreignAuthorId: string): Author | undefined {

@@ -23,7 +23,11 @@
  */
 
 import type { EditionRepository } from "./editionRepository.js";
-import { EditionDeletedEvent, type BookDeletedEvent, type IBooksEventAggregator } from "./events.js";
+import {
+  EditionDeletedEvent,
+  type BookDeletedEvent,
+  type IBooksEventAggregator,
+} from "./events.js";
 import { findByStringInexact, type ITextMatcher } from "./textMatching.js";
 import type { Edition } from "./models.js";
 
@@ -68,7 +72,9 @@ export class EditionService {
   }
 
   getEditionsByBook(bookIdOrIds: number | number[]): Edition[] {
-    return this.editionRepository.findByBook(Array.isArray(bookIdOrIds) ? bookIdOrIds : [bookIdOrIds]);
+    return this.editionRepository.findByBook(
+      Array.isArray(bookIdOrIds) ? bookIdOrIds : [bookIdOrIds]
+    );
   }
 
   getEditionsByAuthor(authorId: number): Edition[] {
@@ -81,7 +87,9 @@ export class EditionService {
 
   /** Ported from EditionService.EditionScoringFunctions(string title). */
   private editionScoringFunctions(title: string): Array<(edition: Edition) => number> {
-    const cleanBrackets = this.textMatcher.cleanAuthorName(this.textMatcher.removeBracketsAndContents(title));
+    const cleanBrackets = this.textMatcher.cleanAuthorName(
+      this.textMatcher.removeBracketsAndContents(title)
+    );
     const cleanDash = this.textMatcher.cleanAuthorName(this.textMatcher.removeAfterDash(title));
     const cleanBracketDash = this.textMatcher.cleanAuthorName(
       this.textMatcher.removeAfterDash(this.textMatcher.removeBracketsAndContents(title))

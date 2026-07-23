@@ -1,8 +1,12 @@
 import type { IDatabase } from "../db/database.js";
 import { BasicRepository, type ColumnMapping } from "../db/basic-repository.js";
-import { ModelAction, ModelEvent, NullEventAggregator, type IEventAggregator } from "../db/events.js";
-import type { CalibreSettings, MonitorType, NewItemMonitorType } from "./root-folder.js";
-import type { RootFolder } from "./root-folder.js";
+import {
+  ModelAction,
+  ModelEvent,
+  NullEventAggregator,
+  type IEventAggregator,
+} from "../db/events.js";
+import type { CalibreSettings, RootFolder } from "./root-folder.js";
 
 /**
  * Ported from NzbDrone.Core/RootFolders/RootFolderRepository.cs.
@@ -81,11 +85,13 @@ function fromRow(row: RootFolderRow): RootFolder {
     path: row.path,
     defaultMetadataProfileId: row.defaultMetadataProfileId,
     defaultQualityProfileId: row.defaultQualityProfileId,
-    defaultMonitorOption: row.defaultMonitorOption as MonitorType,
-    defaultNewItemMonitorOption: row.defaultNewItemMonitorOption as NewItemMonitorType,
+    defaultMonitorOption: row.defaultMonitorOption,
+    defaultNewItemMonitorOption: row.defaultNewItemMonitorOption,
     defaultTags: new Set(row.defaultTags ? (JSON.parse(row.defaultTags) as number[]) : []),
     isCalibreLibrary: row.isCalibreLibrary,
-    calibreSettings: row.calibreSettings ? (JSON.parse(row.calibreSettings) as CalibreSettings) : null,
+    calibreSettings: row.calibreSettings
+      ? (JSON.parse(row.calibreSettings) as CalibreSettings)
+      : null,
     accessible: false,
     freeSpace: null,
     totalSpace: null,

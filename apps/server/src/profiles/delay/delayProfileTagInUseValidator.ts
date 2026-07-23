@@ -21,9 +21,7 @@ export function delayProfileTagsAreValid(
     return true;
   }
 
-  return delayProfileService
-    .all()
-    .every((d) => d.id === instanceId || !intersects(d.tags, tags));
+  return delayProfileService.all().every((d) => d.id === instanceId || !intersects(d.tags, tags));
 }
 
 function intersects(a: Set<number>, b: Set<number>): boolean {

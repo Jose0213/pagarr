@@ -7,7 +7,8 @@ interface Widget {
   priority: number;
 }
 
-const columnFor = (field: string) => `"Widgets"."${field === "id" ? "Id" : field[0]!.toUpperCase() + field.slice(1)}"`;
+const columnFor = (field: string) =>
+  `"Widgets"."${field === "id" ? "Id" : field[0]!.toUpperCase() + field.slice(1)}"`;
 
 describe("compileFilter", () => {
   it("compiles eq against a non-null value", () => {
@@ -46,19 +47,22 @@ describe("compileFilter", () => {
   });
 
   it("compiles string operators to LIKE patterns matching WhereBuilderSqlite's ParseContains/StartsWith/EndsWith", () => {
-    expect(compileFilter<Widget>({ field: "name", op: "contains", value: "x" }, columnFor).sql).toBe(
-      `"Widgets"."Name" LIKE '%' || ? || '%'`
-    );
-    expect(compileFilter<Widget>({ field: "name", op: "startsWith", value: "x" }, columnFor).sql).toBe(
-      `"Widgets"."Name" LIKE ? || '%'`
-    );
-    expect(compileFilter<Widget>({ field: "name", op: "endsWith", value: "x" }, columnFor).sql).toBe(
-      `"Widgets"."Name" LIKE '%' || ?`
-    );
+    expect(
+      compileFilter<Widget>({ field: "name", op: "contains", value: "x" }, columnFor).sql
+    ).toBe(`"Widgets"."Name" LIKE '%' || ? || '%'`);
+    expect(
+      compileFilter<Widget>({ field: "name", op: "startsWith", value: "x" }, columnFor).sql
+    ).toBe(`"Widgets"."Name" LIKE ? || '%'`);
+    expect(
+      compileFilter<Widget>({ field: "name", op: "endsWith", value: "x" }, columnFor).sql
+    ).toBe(`"Widgets"."Name" LIKE '%' || ?`);
   });
 
   it("compiles 'in' with a non-empty list", () => {
-    const result = compileFilter<Widget>({ field: "priority", op: "in", value: [1, 2, 3] }, columnFor);
+    const result = compileFilter<Widget>(
+      { field: "priority", op: "in", value: [1, 2, 3] },
+      columnFor
+    );
     expect(result.sql).toBe('"Widgets"."Priority" IN (?, ?, ?)');
     expect(result.params).toEqual([1, 2, 3]);
   });
@@ -96,7 +100,12 @@ describe("compileFilter", () => {
   it("supports nesting AND inside OR", () => {
     const expr: FilterExpression<Widget> = {
       or: [
-        { and: [{ field: "name", op: "eq", value: "A" }, { field: "priority", op: "gt", value: 1 }] },
+        {
+          and: [
+            { field: "name", op: "eq", value: "A" },
+            { field: "priority", op: "gt", value: 1 },
+          ],
+        },
         { field: "name", op: "eq", value: "B" },
       ],
     };

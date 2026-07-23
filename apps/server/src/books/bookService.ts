@@ -90,7 +90,9 @@ export class BookService {
   deleteBook(bookId: number, deleteFiles: boolean, addImportListExclusion = false): void {
     const book = this.bookRepository.get(bookId);
     this.bookRepository.delete(bookId);
-    this.eventAggregator.publishEvent(new BookDeletedEvent(book, deleteFiles, addImportListExclusion));
+    this.eventAggregator.publishEvent(
+      new BookDeletedEvent(book, deleteFiles, addImportListExclusion)
+    );
   }
 
   findById(foreignId: string): Book | undefined {
@@ -117,7 +119,9 @@ export class BookService {
       this.textMatcher.removeAfterDash(this.textMatcher.removeBracketsAndContents(title))
     );
     const cleanDash = this.textMatcher.cleanAuthorName(this.textMatcher.removeAfterDash(title));
-    const cleanBrackets = this.textMatcher.cleanAuthorName(this.textMatcher.removeBracketsAndContents(title));
+    const cleanBrackets = this.textMatcher.cleanAuthorName(
+      this.textMatcher.removeBracketsAndContents(title)
+    );
 
     return [
       (b) => this.textMatcher.fuzzyMatch(b.cleanTitle, cleanTitle),
@@ -127,7 +131,8 @@ export class BookService {
       (b) => this.textMatcher.fuzzyMatch(b.cleanTitle, cleanBracketDash),
       (b) => this.textMatcher.fuzzyContains(cleanTitle, b.cleanTitle),
       (b) => this.textMatcher.fuzzyContains(title, b.title),
-      (b) => this.textMatcher.fuzzyMatch(this.textMatcher.splitBookTitle(b.title, authorName)[0], title),
+      (b) =>
+        this.textMatcher.fuzzyMatch(this.textMatcher.splitBookTitle(b.title, authorName)[0], title),
     ];
   }
 
@@ -215,7 +220,12 @@ export class BookService {
     return this.bookRepository.booksBetweenDates(start, end, includeUnmonitored);
   }
 
-  authorBooksBetweenDates(author: Author, start: string, end: string, includeUnmonitored: boolean): Book[] {
+  authorBooksBetweenDates(
+    author: Author,
+    start: string,
+    end: string,
+    includeUnmonitored: boolean
+  ): Book[] {
     return this.bookRepository.authorBooksBetweenDates(author, start, end, includeUnmonitored);
   }
 

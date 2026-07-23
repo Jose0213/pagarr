@@ -94,8 +94,7 @@ export class QualityProfileRepository {
 
   find(id: number): QualityProfile | undefined {
     const row = this.conn().prepare('SELECT * FROM "QualityProfiles" WHERE "Id" = ?').get(id) as
-      | Row
-      | undefined;
+      Row | undefined;
     return row ? this.hydrate(this.rowToModel(row)) : undefined;
   }
 

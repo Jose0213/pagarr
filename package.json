@@ -11,6 +11,19 @@
   "scripts": {
     "build": "pnpm --filter @pagarr/server build",
     "typecheck": "pnpm --filter @pagarr/server typecheck",
-    "test": "pnpm --filter @pagarr/server test"
+    "test": "pnpm --filter @pagarr/server test",
+    "test:coverage": "pnpm --filter @pagarr/server test:coverage",
+    "check:regex": "pnpm --filter @pagarr/server check:regex",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "eslint": "10.7.0",
+    "eslint-config-prettier": "10.1.8",
+    "prettier": "3.9.6",
+    "typescript-eslint": "8.65.0"
   }
 }

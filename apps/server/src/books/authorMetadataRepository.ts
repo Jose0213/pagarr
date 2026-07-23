@@ -79,14 +79,18 @@ function parseOr<T>(value: string | null | undefined, fallback: T): T {
   if (typeof value !== "string") {
     // Already deserialized (e.g. a caller-constructed in-memory model that
     // never round-tripped through the DB) -- pass through unchanged.
-    return value as unknown as T;
+    return value;
   }
   return JSON.parse(value) as T;
 }
 
 export class AuthorMetadataRepository extends BasicRepository<AuthorMetadata> {
   constructor(database: IDatabase, eventAggregator?: IEventAggregator) {
-    super(database, { tableName: "AuthorMetadata", columns: AUTHOR_METADATA_COLUMNS, eventAggregator });
+    super(database, {
+      tableName: "AuthorMetadata",
+      columns: AUTHOR_METADATA_COLUMNS,
+      eventAggregator,
+    });
   }
 
   override all(): AuthorMetadata[] {
@@ -135,7 +139,10 @@ export class AuthorMetadataRepository extends BasicRepository<AuthorMetadata> {
     return deserialize(super.upsert(serialize(model)));
   }
 
-  override setFields(model: AuthorMetadata, properties: (Exclude<keyof AuthorMetadata, "id"> & string)[]): void {
+  override setFields(
+    model: AuthorMetadata,
+    properties: Exclude<keyof AuthorMetadata, "id">[]
+  ): void {
     super.setFields(serialize(model), properties);
   }
 

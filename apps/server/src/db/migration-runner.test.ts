@@ -69,15 +69,15 @@ describe("migrate against the main database", () => {
     const db = new DatabaseSync(":memory:");
     migrate(db, MAIN_MIGRATIONS_DIR);
 
-    const versionBefore = db
-      .prepare('SELECT MAX("Version") as v FROM "VersionInfo"')
-      .get() as { v: number };
+    const versionBefore = db.prepare('SELECT MAX("Version") as v FROM "VersionInfo"').get() as {
+      v: number;
+    };
 
     expect(() => migrate(db, MAIN_MIGRATIONS_DIR)).not.toThrow();
 
-    const versionAfter = db
-      .prepare('SELECT MAX("Version") as v FROM "VersionInfo"')
-      .get() as { v: number };
+    const versionAfter = db.prepare('SELECT MAX("Version") as v FROM "VersionInfo"').get() as {
+      v: number;
+    };
 
     expect(versionAfter.v).toBe(versionBefore.v);
 
@@ -132,7 +132,10 @@ describe("migrate against the main database", () => {
     expect(row["AuthorId"]).toBe(5);
     expect(row["DownloadId"]).toBe("abc123");
     expect(row["Protocol"]).toBe(2);
-    expect(JSON.parse(row["Data"] as string)).toEqual({ indexer: "MyIndexer", downloadClient: null });
+    expect(JSON.parse(row["Data"] as string)).toEqual({
+      indexer: "MyIndexer",
+      downloadClient: null,
+    });
   });
 
   it("converts ReleaseProfiles.Required/Ignored comma strings to JSON arrays (migration 0026)", () => {

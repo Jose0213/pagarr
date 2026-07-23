@@ -6,9 +6,22 @@ import { AuthorRepository } from "../authorRepository.js";
 import { AuthorMetadataRepository } from "../authorMetadataRepository.js";
 import { EditionService } from "../editionService.js";
 import type { MainDatabase } from "../../db/db-factory.js";
-import { BookDeletedEvent, EditionDeletedEvent, type BooksDomainEvent, type IBooksEventAggregator } from "../events.js";
+import {
+  BookDeletedEvent,
+  EditionDeletedEvent,
+  type BooksDomainEvent,
+  type IBooksEventAggregator,
+} from "../events.js";
 import { NullTextMatcher } from "../textMatching.js";
-import { newAuthor, newAuthorMetadata, newBook, newEdition, type Author, type Book, type Edition } from "../models.js";
+import {
+  newAuthor,
+  newAuthorMetadata,
+  newBook,
+  newEdition,
+  type Author,
+  type Book,
+  type Edition,
+} from "../models.js";
 
 class CapturingEventAggregator implements IBooksEventAggregator {
   events: BooksDomainEvent[] = [];
@@ -41,18 +54,42 @@ describe("EditionService", () => {
   });
 
   function insertAuthor(): Author {
-    const meta = metaRepo.insert({ ...newAuthorMetadata(), foreignAuthorId: "fa-1", titleSlug: "s", name: "N" } as never);
-    return authorRepo.insert({ ...newAuthor(), authorMetadataId: meta.id, cleanName: "n", path: "/books/N" } as Author);
+    const meta = metaRepo.insert({
+      ...newAuthorMetadata(),
+      foreignAuthorId: "fa-1",
+      titleSlug: "s",
+      name: "N",
+    });
+    return authorRepo.insert({
+      ...newAuthor(),
+      authorMetadataId: meta.id,
+      cleanName: "n",
+      path: "/books/N",
+    });
   }
 
   function insertBook(authorMetadataId: number): Book {
-    return bookRepo.insert({ ...newBook(), authorMetadataId, foreignBookId: "fb-1", titleSlug: "b1", title: "B1", cleanTitle: "b1" } as Book);
+    return bookRepo.insert({
+      ...newBook(),
+      authorMetadataId,
+      foreignBookId: "fb-1",
+      titleSlug: "b1",
+      title: "B1",
+      cleanTitle: "b1",
+    });
   }
 
   it("getEdition / getEditionByForeignEditionId / getAllMonitoredEditions delegate to the repository", () => {
     const author = insertAuthor();
     const book = insertBook(author.authorMetadataId);
-    const edition = editionRepo.insert({ ...newEdition(), bookId: book.id, foreignEditionId: "fe-1", titleSlug: "fe1", title: "E1", monitored: true } as never);
+    const edition = editionRepo.insert({
+      ...newEdition(),
+      bookId: book.id,
+      foreignEditionId: "fe-1",
+      titleSlug: "fe1",
+      title: "E1",
+      monitored: true,
+    });
 
     expect(service.getEdition(edition.id).id).toBe(edition.id);
     expect(service.getEditionByForeignEditionId("fe-1")?.id).toBe(edition.id);
@@ -62,8 +99,20 @@ describe("EditionService", () => {
   it("deleteMany deletes and publishes one EditionDeletedEvent per edition", () => {
     const author = insertAuthor();
     const book = insertBook(author.authorMetadataId);
-    const e1 = editionRepo.insert({ ...newEdition(), bookId: book.id, foreignEditionId: "fe-1", titleSlug: "fe1", title: "E1" } as never);
-    const e2 = editionRepo.insert({ ...newEdition(), bookId: book.id, foreignEditionId: "fe-2", titleSlug: "fe2", title: "E2" } as never);
+    const e1 = editionRepo.insert({
+      ...newEdition(),
+      bookId: book.id,
+      foreignEditionId: "fe-1",
+      titleSlug: "fe1",
+      title: "E1",
+    });
+    const e2 = editionRepo.insert({
+      ...newEdition(),
+      bookId: book.id,
+      foreignEditionId: "fe-2",
+      titleSlug: "fe2",
+      title: "E2",
+    });
 
     service.deleteMany([e1, e2]);
 
@@ -74,7 +123,13 @@ describe("EditionService", () => {
   it("getEditionsByBook accepts either a single id or an array", () => {
     const author = insertAuthor();
     const book = insertBook(author.authorMetadataId);
-    const edition = editionRepo.insert({ ...newEdition(), bookId: book.id, foreignEditionId: "fe-1", titleSlug: "fe1", title: "E1" } as never);
+    const edition = editionRepo.insert({
+      ...newEdition(),
+      bookId: book.id,
+      foreignEditionId: "fe-1",
+      titleSlug: "fe1",
+      title: "E1",
+    });
 
     expect(service.getEditionsByBook(book.id).map((e) => e.id)).toEqual([edition.id]);
     expect(service.getEditionsByBook([book.id]).map((e) => e.id)).toEqual([edition.id]);
@@ -83,8 +138,22 @@ describe("EditionService", () => {
   it("setMonitored delegates to the repository (unmonitors siblings)", () => {
     const author = insertAuthor();
     const book = insertBook(author.authorMetadataId);
-    const e1 = editionRepo.insert({ ...newEdition(), bookId: book.id, foreignEditionId: "fe-1", titleSlug: "fe1", title: "E1", monitored: true } as never);
-    const e2 = editionRepo.insert({ ...newEdition(), bookId: book.id, foreignEditionId: "fe-2", titleSlug: "fe2", title: "E2", monitored: false } as never);
+    const e1 = editionRepo.insert({
+      ...newEdition(),
+      bookId: book.id,
+      foreignEditionId: "fe-1",
+      titleSlug: "fe1",
+      title: "E1",
+      monitored: true,
+    });
+    const e2 = editionRepo.insert({
+      ...newEdition(),
+      bookId: book.id,
+      foreignEditionId: "fe-2",
+      titleSlug: "fe2",
+      title: "E2",
+      monitored: false,
+    });
 
     service.setMonitored(e2);
 
@@ -95,7 +164,13 @@ describe("EditionService", () => {
   it("handleBookDeleted deletes every edition of that book", () => {
     const author = insertAuthor();
     const book = insertBook(author.authorMetadataId);
-    editionRepo.insert({ ...newEdition(), bookId: book.id, foreignEditionId: "fe-1", titleSlug: "fe1", title: "E1" } as never);
+    editionRepo.insert({
+      ...newEdition(),
+      bookId: book.id,
+      foreignEditionId: "fe-1",
+      titleSlug: "fe1",
+      title: "E1",
+    });
 
     service.handleBookDeleted(new BookDeletedEvent(book, false, false));
 

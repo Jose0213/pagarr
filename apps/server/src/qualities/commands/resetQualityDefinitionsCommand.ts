@@ -13,6 +13,8 @@ export interface ResetQualityDefinitionsCommand {
   resetTitles: boolean;
 }
 
-export function newResetQualityDefinitionsCommand(resetTitles = false): ResetQualityDefinitionsCommand {
+export function newResetQualityDefinitionsCommand(
+  resetTitles = false
+): ResetQualityDefinitionsCommand {
   return { resetTitles };
 }

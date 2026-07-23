@@ -32,7 +32,11 @@ export const WRITE_BOOK_TAGS_TYPE_VALUES = ["NewFiles", "AllFiles", "Sync"] as c
 export type WriteBookTagsType = (typeof WRITE_BOOK_TAGS_TYPE_VALUES)[number];
 
 // --- Ported from Qualities/ProperDownloadTypes.cs (referenced by ConfigService.DownloadPropersAndRepacks) ---
-export const PROPER_DOWNLOAD_TYPES_VALUES = ["PreferAndUpgrade", "DoNotUpgrade", "DoNotPrefer"] as const;
+export const PROPER_DOWNLOAD_TYPES_VALUES = [
+  "PreferAndUpgrade",
+  "DoNotUpgrade",
+  "DoNotPrefer",
+] as const;
 export type ProperDownloadTypes = (typeof PROPER_DOWNLOAD_TYPES_VALUES)[number];
 
 // --- Ported from MediaFiles/FileDateType.cs (referenced by ConfigService.FileDate) ---
@@ -60,7 +64,10 @@ export type AuthenticationType = (typeof AUTHENTICATION_TYPE_VALUES)[number];
 
 // --- Ported from Authentication/AuthenticationRequiredType.cs ---
 // C# values: Enabled = 0, DisabledForLocalAddresses = 1
-export const AUTHENTICATION_REQUIRED_TYPE_VALUES = ["Enabled", "DisabledForLocalAddresses"] as const;
+export const AUTHENTICATION_REQUIRED_TYPE_VALUES = [
+  "Enabled",
+  "DisabledForLocalAddresses",
+] as const;
 export type AuthenticationRequiredType = (typeof AUTHENTICATION_REQUIRED_TYPE_VALUES)[number];
 
 // --- Ported from Update/UpdateMechanism.cs (referenced by ConfigFileProvider.UpdateMechanism) ---

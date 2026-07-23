@@ -6,7 +6,14 @@ import { AuthorMetadataRepository } from "../authorMetadataRepository.js";
 import { EditionRepository } from "../editionRepository.js";
 import type { MainDatabase } from "../../db/db-factory.js";
 import { PagingSpec, SortDirection } from "../../db/paging-spec.js";
-import { newAuthor, newAuthorMetadata, newBook, newEdition, type Author, type Book } from "../models.js";
+import {
+  newAuthor,
+  newAuthorMetadata,
+  newBook,
+  newEdition,
+  type Author,
+  type Book,
+} from "../models.js";
 
 describe("BookRepository", () => {
   let db: MainDatabase;
@@ -33,14 +40,14 @@ describe("BookRepository", () => {
       foreignAuthorId,
       titleSlug: `slug-${foreignAuthorId}`,
       name: `Author ${foreignAuthorId}`,
-    } as never);
+    });
     return authorRepo.insert({
       ...newAuthor(),
       authorMetadataId: meta.id,
       cleanName: `author${foreignAuthorId}`,
       path: `/books/${foreignAuthorId}`,
       monitored: true,
-    } as Author);
+    });
   }
 
   function insertBook(authorMetadataId: number, overrides: Partial<Book> = {}): Book {
@@ -53,7 +60,7 @@ describe("BookRepository", () => {
       cleanTitle: overrides.cleanTitle ?? "abook",
       monitored: overrides.monitored ?? true,
       ...overrides,
-    } as Book);
+    });
   }
 
   it("inserts and retrieves a book round-trip, including RelatedBooks and LastSearchTime", () => {
@@ -136,7 +143,10 @@ describe("BookRepository", () => {
 
       const results = bookRepo.getBooksForRefresh(author.authorMetadataId, ["fb-2"]);
       expect(results.map((b) => b.id).sort()).toEqual(
-        [...bookRepo.getBooksByAuthorMetadataId(author.authorMetadataId).map((b) => b.id), foreignBook.id].sort()
+        [
+          ...bookRepo.getBooksByAuthorMetadataId(author.authorMetadataId).map((b) => b.id),
+          foreignBook.id,
+        ].sort()
       );
     });
 
@@ -150,7 +160,10 @@ describe("BookRepository", () => {
 
   it("findById / findBySlug find a single book", () => {
     const author = insertAuthor();
-    const book = insertBook(author.authorMetadataId, { foreignBookId: "fb-unique", titleSlug: "slug-unique" });
+    const book = insertBook(author.authorMetadataId, {
+      foreignBookId: "fb-unique",
+      titleSlug: "slug-unique",
+    });
 
     expect(bookRepo.findById("fb-unique")?.id).toBe(book.id);
     expect(bookRepo.findById("missing")).toBeUndefined();
@@ -163,14 +176,26 @@ describe("BookRepository", () => {
       const author = insertAuthor();
       insertBook(author.authorMetadataId, { title: "The Hobbit", cleanTitle: "thehobbit" });
 
-      expect(bookRepo.findByTitle(author.authorMetadataId, "The Hobbit", "thehobbit")?.title).toBe("The Hobbit");
+      expect(bookRepo.findByTitle(author.authorMetadataId, "The Hobbit", "thehobbit")?.title).toBe(
+        "The Hobbit"
+      );
       expect(bookRepo.findByTitle(author.authorMetadataId, "Nope", "nope")).toBeUndefined();
     });
 
     it("returns undefined when more than one book matches", () => {
       const author = insertAuthor();
-      insertBook(author.authorMetadataId, { title: "Dupe", cleanTitle: "dupe", foreignBookId: "fb-d1", titleSlug: "d1" });
-      insertBook(author.authorMetadataId, { title: "Dupe", cleanTitle: "dupe", foreignBookId: "fb-d2", titleSlug: "d2" });
+      insertBook(author.authorMetadataId, {
+        title: "Dupe",
+        cleanTitle: "dupe",
+        foreignBookId: "fb-d1",
+        titleSlug: "d1",
+      });
+      insertBook(author.authorMetadataId, {
+        title: "Dupe",
+        cleanTitle: "dupe",
+        foreignBookId: "fb-d2",
+        titleSlug: "d2",
+      });
 
       expect(bookRepo.findByTitle(author.authorMetadataId, "Dupe", "dupe")).toBeUndefined();
     });
@@ -179,8 +204,14 @@ describe("BookRepository", () => {
   describe("booksWithoutFiles", () => {
     it("returns only books whose monitored edition has no BookFile and whose release date has passed", () => {
       const author = insertAuthor();
-      const past = insertBook(author.authorMetadataId, { title: "Past", releaseDate: "2000-01-01T00:00:00.000Z" });
-      const future = insertBook(author.authorMetadataId, { title: "Future", releaseDate: "2099-01-01T00:00:00.000Z" });
+      const past = insertBook(author.authorMetadataId, {
+        title: "Past",
+        releaseDate: "2000-01-01T00:00:00.000Z",
+      });
+      const future = insertBook(author.authorMetadataId, {
+        title: "Future",
+        releaseDate: "2099-01-01T00:00:00.000Z",
+      });
 
       editionRepo.insert({
         ...newEdition(),
@@ -189,7 +220,7 @@ describe("BookRepository", () => {
         titleSlug: "fe-past-slug",
         title: "Past Edition",
         monitored: true,
-      } as never);
+      });
       editionRepo.insert({
         ...newEdition(),
         bookId: future.id,
@@ -197,7 +228,7 @@ describe("BookRepository", () => {
         titleSlug: "fe-future-slug",
         title: "Future Edition",
         monitored: true,
-      } as never);
+      });
 
       const spec = new PagingSpec<Book>();
       spec.page = 1;
@@ -214,9 +245,21 @@ describe("BookRepository", () => {
   describe("booksBetweenDates / authorBooksBetweenDates", () => {
     it("filters by release date range, and by monitored status when includeUnmonitored is false", () => {
       const author = insertAuthor();
-      insertBook(author.authorMetadataId, { title: "InRange", releaseDate: "2020-06-01T00:00:00.000Z", monitored: true });
-      insertBook(author.authorMetadataId, { title: "OutOfRange", releaseDate: "2010-06-01T00:00:00.000Z", monitored: true });
-      insertBook(author.authorMetadataId, { title: "Unmonitored", releaseDate: "2020-07-01T00:00:00.000Z", monitored: false });
+      insertBook(author.authorMetadataId, {
+        title: "InRange",
+        releaseDate: "2020-06-01T00:00:00.000Z",
+        monitored: true,
+      });
+      insertBook(author.authorMetadataId, {
+        title: "OutOfRange",
+        releaseDate: "2010-06-01T00:00:00.000Z",
+        monitored: true,
+      });
+      insertBook(author.authorMetadataId, {
+        title: "Unmonitored",
+        releaseDate: "2020-07-01T00:00:00.000Z",
+        monitored: false,
+      });
 
       const start = "2020-01-01T00:00:00.000Z";
       const end = "2020-12-31T00:00:00.000Z";
@@ -269,7 +312,7 @@ describe("BookRepository", () => {
         titleSlug: "fe-1-slug",
         title: "Edition 1",
         monitored: true,
-      } as never);
+      });
 
       const conn = db.openConnection();
       const fileResult = conn

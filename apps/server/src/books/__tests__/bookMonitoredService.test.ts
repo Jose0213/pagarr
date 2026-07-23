@@ -11,7 +11,16 @@ import { BookMonitoredService } from "../bookMonitoredService.js";
 import type { MainDatabase } from "../../db/db-factory.js";
 import { NullBooksEventAggregator } from "../events.js";
 import { NullTextMatcher } from "../textMatching.js";
-import { MonitorTypes, newAuthor, newAuthorMetadata, newBook, newEdition, type Author, type Book, type MonitoringOptions } from "../models.js";
+import {
+  MonitorTypes,
+  newAuthor,
+  newAuthorMetadata,
+  newBook,
+  newEdition,
+  type Author,
+  type Book,
+  type MonitoringOptions,
+} from "../models.js";
 
 describe("BookMonitoredService", () => {
   let db: MainDatabase;
@@ -37,8 +46,19 @@ describe("BookMonitoredService", () => {
     bookService = new BookService(bookRepo, editionService, events, new NullTextMatcher());
     service = new BookMonitoredService(authorService, bookService);
 
-    const meta = metaRepo.insert({ ...newAuthorMetadata(), foreignAuthorId: "fa-1", titleSlug: "s", name: "N" } as never);
-    author = authorRepo.insert({ ...newAuthor(), authorMetadataId: meta.id, cleanName: "n", path: "/books/N", monitored: true } as Author);
+    const meta = metaRepo.insert({
+      ...newAuthorMetadata(),
+      foreignAuthorId: "fa-1",
+      titleSlug: "s",
+      name: "N",
+    });
+    author = authorRepo.insert({
+      ...newAuthor(),
+      authorMetadataId: meta.id,
+      cleanName: "n",
+      path: "/books/N",
+      monitored: true,
+    });
   });
 
   afterEach(() => {
@@ -55,7 +75,7 @@ describe("BookMonitoredService", () => {
       cleanTitle: foreignBookId,
       releaseDate,
       monitored,
-    } as Book);
+    });
 
     const edition = editionRepo.insert({
       ...newEdition(),
@@ -64,16 +84,22 @@ describe("BookMonitoredService", () => {
       titleSlug: `${foreignBookId}-e`,
       title: foreignBookId,
       monitored: true,
-    } as never);
+    });
 
     db.openConnection()
-      .prepare('INSERT INTO "BookFiles" ("EditionId", "CalibreId", "Quality", "Size", "DateAdded", "Path") VALUES (?, ?, ?, ?, ?, ?)')
+      .prepare(
+        'INSERT INTO "BookFiles" ("EditionId", "CalibreId", "Quality", "Size", "DateAdded", "Path") VALUES (?, ?, ?, ?, ?, ?)'
+      )
       .run(edition.id, 1, "{}", 1, new Date().toISOString(), `/books/${foreignBookId}.epub`);
 
     return book;
   }
 
-  function insertBookWithoutFile(foreignBookId: string, releaseDate: string, monitored = true): Book {
+  function insertBookWithoutFile(
+    foreignBookId: string,
+    releaseDate: string,
+    monitored = true
+  ): Book {
     const book = bookRepo.insert({
       ...newBook(),
       authorMetadataId: author.authorMetadataId,
@@ -83,7 +109,7 @@ describe("BookMonitoredService", () => {
       cleanTitle: foreignBookId,
       releaseDate,
       monitored,
-    } as Book);
+    });
 
     editionRepo.insert({
       ...newEdition(),
@@ -92,7 +118,7 @@ describe("BookMonitoredService", () => {
       titleSlug: `${foreignBookId}-e`,
       title: foreignBookId,
       monitored: true,
-    } as never);
+    });
 
     return book;
   }
@@ -178,7 +204,10 @@ describe("BookMonitoredService", () => {
     const wanted = insertBookWithoutFile("wanted", "2000-01-01T00:00:00.000Z", false);
     const unwanted = insertBookWithoutFile("unwanted", "2020-01-01T00:00:00.000Z", false);
 
-    service.setBookMonitoredStatus(author, options({ monitor: MonitorTypes.None, booksToMonitor: ["wanted"] }));
+    service.setBookMonitoredStatus(
+      author,
+      options({ monitor: MonitorTypes.None, booksToMonitor: ["wanted"] })
+    );
 
     expect(bookRepo.get(wanted.id).monitored).toBe(true);
     expect(bookRepo.get(unwanted.id).monitored).toBe(false);

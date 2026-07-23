@@ -10,7 +10,11 @@ import type { CachedHttpResponse } from "./CachedHttpResponse.js";
 
 export interface ICachedHttpResponseService {
   get(request: HttpRequest, useCache: boolean, ttlMs: number): Promise<HttpResponse>;
-  getTyped<T>(request: HttpRequest, useCache: boolean, ttlMs: number): Promise<TypedHttpResponse<T>>;
+  getTyped<T>(
+    request: HttpRequest,
+    useCache: boolean,
+    ttlMs: number
+  ): Promise<TypedHttpResponse<T>>;
 }
 
 export class CachedHttpResponseService implements ICachedHttpResponseService {
@@ -47,7 +51,11 @@ export class CachedHttpResponseService implements ICachedHttpResponseService {
     return result;
   }
 
-  async getTyped<T>(request: HttpRequest, useCache: boolean, ttlMs: number): Promise<TypedHttpResponse<T>> {
+  async getTyped<T>(
+    request: HttpRequest,
+    useCache: boolean,
+    ttlMs: number
+  ): Promise<TypedHttpResponse<T>> {
     const response = await this.get(request, useCache, ttlMs);
     return new TypedHttpResponse<T>(response);
   }

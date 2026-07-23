@@ -59,8 +59,7 @@ export class MetadataProfileRepository {
 
   find(id: number): MetadataProfile | undefined {
     const row = this.conn().prepare('SELECT * FROM "MetadataProfiles" WHERE "Id" = ?').get(id) as
-      | Row
-      | undefined;
+      Row | undefined;
     return row ? this.rowToModel(row) : undefined;
   }
 

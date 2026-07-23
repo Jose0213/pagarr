@@ -16,7 +16,15 @@ import {
   type IBooksEventAggregator,
 } from "../events.js";
 import { NullTextMatcher } from "../textMatching.js";
-import { newAuthor, newAuthorMetadata, newBook, newEdition, type Author, type Book, type Edition } from "../models.js";
+import {
+  newAuthor,
+  newAuthorMetadata,
+  newBook,
+  newEdition,
+  type Author,
+  type Book,
+  type Edition,
+} from "../models.js";
 
 class CapturingEventAggregator implements IBooksEventAggregator {
   events: BooksDomainEvent[] = [];
@@ -56,13 +64,13 @@ describe("BookService", () => {
       foreignAuthorId,
       titleSlug: `slug-${foreignAuthorId}`,
       name: `Author ${foreignAuthorId}`,
-    } as never);
+    });
     return authorRepo.insert({
       ...newAuthor(),
       authorMetadataId: meta.id,
       cleanName: `author${foreignAuthorId}`,
       path: `/books/${foreignAuthorId}`,
-    } as Author);
+    });
   }
 
   describe("addBook", () => {
@@ -73,8 +81,22 @@ describe("BookService", () => {
 
     it("inserts the book, inserts new editions, monitors exactly one edition, and publishes BookAddedEvent", () => {
       const author = insertAuthor();
-      const edition1: Edition = { ...newEdition(), id: 0, foreignEditionId: "fe-1", titleSlug: "fe1", title: "Ed1", monitored: true } as Edition;
-      const edition2: Edition = { ...newEdition(), id: 0, foreignEditionId: "fe-2", titleSlug: "fe2", title: "Ed2", monitored: false } as Edition;
+      const edition1: Edition = {
+        ...newEdition(),
+        id: 0,
+        foreignEditionId: "fe-1",
+        titleSlug: "fe1",
+        title: "Ed1",
+        monitored: true,
+      };
+      const edition2: Edition = {
+        ...newEdition(),
+        id: 0,
+        foreignEditionId: "fe-2",
+        titleSlug: "fe2",
+        title: "Ed2",
+        monitored: false,
+      };
 
       const book = {
         ...newBook(),
@@ -101,7 +123,14 @@ describe("BookService", () => {
 
     it("falls back to the first edition if none is monitored", () => {
       const author = insertAuthor();
-      const edition1: Edition = { ...newEdition(), id: 0, foreignEditionId: "fe-1", titleSlug: "fe1", title: "Ed1", monitored: false } as Edition;
+      const edition1: Edition = {
+        ...newEdition(),
+        id: 0,
+        foreignEditionId: "fe-1",
+        titleSlug: "fe1",
+        title: "Ed1",
+        monitored: false,
+      };
 
       const book = {
         ...newBook(),
@@ -129,7 +158,7 @@ describe("BookService", () => {
       titleSlug: "b1",
       title: "B1",
       cleanTitle: "b1",
-    } as Book);
+    });
 
     service.deleteBook(book.id, true, false);
 
@@ -146,7 +175,7 @@ describe("BookService", () => {
       titleSlug: "b1",
       title: "B1",
       cleanTitle: "b1",
-    } as Book);
+    });
 
     expect(service.findById("fb-1")?.id).toBe(book.id);
     expect(service.findBySlug("b1")?.id).toBe(book.id);
@@ -154,13 +183,29 @@ describe("BookService", () => {
   });
 
   it("insertMany throws when any book has AuthorMetadataId 0", () => {
-    expect(() => service.insertMany([{ ...newBook(), authorMetadataId: 0 } as Book])).toThrow(/AuthorMetadataId = 0/);
+    expect(() => service.insertMany([{ ...newBook(), authorMetadataId: 0 }])).toThrow(
+      /AuthorMetadataId = 0/
+    );
   });
 
   it("deleteMany deletes and publishes one BookDeletedEvent per book", () => {
     const author = insertAuthor();
-    const b1 = bookRepo.insert({ ...newBook(), authorMetadataId: author.authorMetadataId, foreignBookId: "fb-1", titleSlug: "b1", title: "B1", cleanTitle: "b1" } as Book);
-    const b2 = bookRepo.insert({ ...newBook(), authorMetadataId: author.authorMetadataId, foreignBookId: "fb-2", titleSlug: "b2", title: "B2", cleanTitle: "b2" } as Book);
+    const b1 = bookRepo.insert({
+      ...newBook(),
+      authorMetadataId: author.authorMetadataId,
+      foreignBookId: "fb-1",
+      titleSlug: "b1",
+      title: "B1",
+      cleanTitle: "b1",
+    });
+    const b2 = bookRepo.insert({
+      ...newBook(),
+      authorMetadataId: author.authorMetadataId,
+      foreignBookId: "fb-2",
+      titleSlug: "b2",
+      title: "B2",
+      cleanTitle: "b2",
+    });
 
     service.deleteMany([b1, b2]);
 
@@ -170,7 +215,14 @@ describe("BookService", () => {
 
   it("updateBook publishes BookEditedEvent with old and new state", () => {
     const author = insertAuthor();
-    const book = bookRepo.insert({ ...newBook(), authorMetadataId: author.authorMetadataId, foreignBookId: "fb-1", titleSlug: "b1", title: "B1", cleanTitle: "b1" } as Book);
+    const book = bookRepo.insert({
+      ...newBook(),
+      authorMetadataId: author.authorMetadataId,
+      foreignBookId: "fb-1",
+      titleSlug: "b1",
+      title: "B1",
+      cleanTitle: "b1",
+    });
 
     service.updateBook({ ...book, title: "B1 Updated" });
 
@@ -183,7 +235,15 @@ describe("BookService", () => {
   describe("setBookMonitored / setMonitored", () => {
     it("setBookMonitored flips Monitored and publishes a self-referential BookEditedEvent", () => {
       const author = insertAuthor();
-      const book = bookRepo.insert({ ...newBook(), authorMetadataId: author.authorMetadataId, foreignBookId: "fb-1", titleSlug: "b1", title: "B1", cleanTitle: "b1", monitored: false } as Book);
+      const book = bookRepo.insert({
+        ...newBook(),
+        authorMetadataId: author.authorMetadataId,
+        foreignBookId: "fb-1",
+        titleSlug: "b1",
+        title: "B1",
+        cleanTitle: "b1",
+        monitored: false,
+      });
 
       service.setBookMonitored(book.id, true);
 
@@ -193,8 +253,24 @@ describe("BookService", () => {
 
     it("setMonitored bulk-flips and publishes one event per book", () => {
       const author = insertAuthor();
-      const b1 = bookRepo.insert({ ...newBook(), authorMetadataId: author.authorMetadataId, foreignBookId: "fb-1", titleSlug: "b1", title: "B1", cleanTitle: "b1", monitored: false } as Book);
-      const b2 = bookRepo.insert({ ...newBook(), authorMetadataId: author.authorMetadataId, foreignBookId: "fb-2", titleSlug: "b2", title: "B2", cleanTitle: "b2", monitored: false } as Book);
+      const b1 = bookRepo.insert({
+        ...newBook(),
+        authorMetadataId: author.authorMetadataId,
+        foreignBookId: "fb-1",
+        titleSlug: "b1",
+        title: "B1",
+        cleanTitle: "b1",
+        monitored: false,
+      });
+      const b2 = bookRepo.insert({
+        ...newBook(),
+        authorMetadataId: author.authorMetadataId,
+        foreignBookId: "fb-2",
+        titleSlug: "b2",
+        title: "B2",
+        cleanTitle: "b2",
+        monitored: false,
+      });
 
       service.setMonitored([b1.id, b2.id], true);
 
@@ -206,9 +282,18 @@ describe("BookService", () => {
 
   it("updateLastSearchTime updates only that field", () => {
     const author = insertAuthor();
-    const book = bookRepo.insert({ ...newBook(), authorMetadataId: author.authorMetadataId, foreignBookId: "fb-1", titleSlug: "b1", title: "B1", cleanTitle: "b1" } as Book);
+    const book = bookRepo.insert({
+      ...newBook(),
+      authorMetadataId: author.authorMetadataId,
+      foreignBookId: "fb-1",
+      titleSlug: "b1",
+      title: "B1",
+      cleanTitle: "b1",
+    });
 
-    service.updateLastSearchTime([{ ...book, lastSearchTime: "2026-01-01T00:00:00.000Z", title: "should not persist" }]);
+    service.updateLastSearchTime([
+      { ...book, lastSearchTime: "2026-01-01T00:00:00.000Z", title: "should not persist" },
+    ]);
 
     const reloaded = bookRepo.get(book.id);
     expect(reloaded.lastSearchTime).toBe("2026-01-01T00:00:00.000Z");
@@ -217,8 +302,22 @@ describe("BookService", () => {
 
   it("handleAuthorDeleted deletes every book belonging to that author's metadata id", () => {
     const author = insertAuthor();
-    bookRepo.insert({ ...newBook(), authorMetadataId: author.authorMetadataId, foreignBookId: "fb-1", titleSlug: "b1", title: "B1", cleanTitle: "b1" } as Book);
-    bookRepo.insert({ ...newBook(), authorMetadataId: author.authorMetadataId, foreignBookId: "fb-2", titleSlug: "b2", title: "B2", cleanTitle: "b2" } as Book);
+    bookRepo.insert({
+      ...newBook(),
+      authorMetadataId: author.authorMetadataId,
+      foreignBookId: "fb-1",
+      titleSlug: "b1",
+      title: "B1",
+      cleanTitle: "b1",
+    });
+    bookRepo.insert({
+      ...newBook(),
+      authorMetadataId: author.authorMetadataId,
+      foreignBookId: "fb-2",
+      titleSlug: "b2",
+      title: "B2",
+      cleanTitle: "b2",
+    });
 
     service.handleAuthorDeleted(new AuthorDeletedEvent(author, false, false));
 

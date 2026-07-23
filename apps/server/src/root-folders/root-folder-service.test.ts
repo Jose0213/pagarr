@@ -89,7 +89,9 @@ describe("RootFolderService.add / verifyRootFolder", () => {
   it("throws InvalidPathError for a non-rooted (relative) path", async () => {
     const service = new RootFolderService(makeFakeRepository(), makeFakeDiskProvider());
 
-    await expect(service.add(baseFolder({ path: "relative/books" }))).rejects.toThrow(InvalidPathError);
+    await expect(service.add(baseFolder({ path: "relative/books" }))).rejects.toThrow(
+      InvalidPathError
+    );
   });
 
   it("throws DirectoryNotFoundError when the folder doesn't exist on disk", async () => {
@@ -110,7 +112,9 @@ describe("RootFolderService.add / verifyRootFolder", () => {
     const existing = baseFolder({ id: 1, path: "/books" });
     const service = new RootFolderService(makeFakeRepository([existing]), makeFakeDiskProvider());
 
-    await expect(service.add(baseFolder({ path: "/books" }))).rejects.toThrow(RootFolderAlreadyExistsError);
+    await expect(service.add(baseFolder({ path: "/books" }))).rejects.toThrow(
+      RootFolderAlreadyExistsError
+    );
   });
 
   it("adds a valid, unique, writable root folder and populates disk stats", async () => {
@@ -175,7 +179,10 @@ describe("RootFolderService.remove/get/all/allForTag", () => {
   it("get() returns the folder with disk stats populated", async () => {
     const existing = baseFolder({ id: 1, path: "/books" });
     const repo = makeFakeRepository([existing]);
-    const service = new RootFolderService(repo, makeFakeDiskProvider({ getAvailableSpace: () => 7 }));
+    const service = new RootFolderService(
+      repo,
+      makeFakeDiskProvider({ getAvailableSpace: () => 7 })
+    );
 
     const result = await service.get(1);
 
@@ -212,7 +219,10 @@ describe("RootFolderService.allWithSpaceStats", () => {
       baseFolder({ id: 1, path: "/books" }),
       baseFolder({ id: 2, path: "/audiobooks" }),
     ]);
-    const service = new RootFolderService(repo, makeFakeDiskProvider({ getAvailableSpace: () => 123 }));
+    const service = new RootFolderService(
+      repo,
+      makeFakeDiskProvider({ getAvailableSpace: () => 123 })
+    );
 
     const result = await service.allWithSpaceStats();
 
@@ -290,7 +300,9 @@ describe("RootFolderService.getBestRootFolder / getBestRootFolderPath", () => {
   it("getBestRootFolderPath falls back to the path's own directory when no root folder matches", () => {
     const service = new RootFolderService(makeFakeRepository([]), makeFakeDiskProvider());
 
-    expect(service.getBestRootFolderPath("/unrelated/author/book.epub", [])).toBe("/unrelated/author");
+    expect(service.getBestRootFolderPath("/unrelated/author/book.epub", [])).toBe(
+      "/unrelated/author"
+    );
   });
 
   it("getBestRootFolderPath fallback strips a trailing separator", () => {

@@ -6,7 +6,10 @@ import { TagService, type TagUsageProvider } from "../tagService.js";
 import type { Tag } from "../tag.js";
 
 function makeService(onTagsUpdated?: () => void): { repo: TagRepository; service: TagService } {
-  const db = createDatabase("Test", { path: ":memory:", migrationsDir: DEFAULT_MAIN_MIGRATIONS_DIR });
+  const db = createDatabase("Test", {
+    path: ":memory:",
+    migrationsDir: DEFAULT_MAIN_MIGRATIONS_DIR,
+  });
   const repo = new TagRepository(db);
   const service = new TagService(repo, {}, onTagsUpdated);
   return { repo, service };
@@ -22,9 +25,9 @@ describe("TagService", () => {
 
   describe("all", () => {
     it("returns tags ordered by label (TagService.All: _repo.All().OrderBy(t => t.Label))", () => {
-      repo.insert({ id: 0, label: "zebra" } as Tag);
-      repo.insert({ id: 0, label: "alpha" } as Tag);
-      repo.insert({ id: 0, label: "mid" } as Tag);
+      repo.insert({ id: 0, label: "zebra" });
+      repo.insert({ id: 0, label: "alpha" });
+      repo.insert({ id: 0, label: "mid" });
 
       expect(service.all().map((t) => t.label)).toEqual(["alpha", "mid", "zebra"]);
     });
@@ -32,19 +35,19 @@ describe("TagService", () => {
 
   describe("getTag", () => {
     it("looks up by numeric id when given a number", () => {
-      const inserted = repo.insert({ id: 0, label: "sci-fi" } as Tag);
+      const inserted = repo.insert({ id: 0, label: "sci-fi" });
 
       expect(service.getTag(inserted.id)).toEqual(inserted);
     });
 
     it("looks up by id when given an all-digit string (tag.All(char.IsDigit))", () => {
-      const inserted = repo.insert({ id: 0, label: "sci-fi" } as Tag);
+      const inserted = repo.insert({ id: 0, label: "sci-fi" });
 
       expect(service.getTag(String(inserted.id))).toEqual(inserted);
     });
 
     it("looks up by label when given a non-numeric string", () => {
-      const inserted = repo.insert({ id: 0, label: "sci-fi" } as Tag);
+      const inserted = repo.insert({ id: 0, label: "sci-fi" });
 
       expect(service.getTag("sci-fi")).toEqual(inserted);
     });
@@ -67,7 +70,7 @@ describe("TagService", () => {
       const onTagsUpdated = vi.fn();
       ({ repo, service } = makeService(onTagsUpdated));
 
-      const result = service.add({ id: 0, label: "Sci-Fi" } as Tag);
+      const result = service.add({ id: 0, label: "Sci-Fi" });
 
       expect(result.label).toBe("sci-fi");
       expect(result.id).toBeGreaterThan(0);
@@ -77,9 +80,9 @@ describe("TagService", () => {
     it("returns the existing tag unchanged when the label already exists, without inserting a duplicate", () => {
       const onTagsUpdated = vi.fn();
       ({ repo, service } = makeService(onTagsUpdated));
-      const seeded = repo.insert({ id: 0, label: "sci-fi" } as Tag);
+      const seeded = repo.insert({ id: 0, label: "sci-fi" });
 
-      const result = service.add({ id: 0, label: "sci-fi" } as Tag);
+      const result = service.add({ id: 0, label: "sci-fi" });
 
       expect(result).toEqual(seeded);
       expect(repo.all()).toHaveLength(1);
@@ -91,7 +94,7 @@ describe("TagService", () => {
     it("lower-cases the label and persists, firing onTagsUpdated", () => {
       const onTagsUpdated = vi.fn();
       ({ repo, service } = makeService(onTagsUpdated));
-      const seeded = repo.insert({ id: 0, label: "sci-fi" } as Tag);
+      const seeded = repo.insert({ id: 0, label: "sci-fi" });
 
       const result = service.update({ ...seeded, label: "Fantasy" });
 
@@ -103,7 +106,7 @@ describe("TagService", () => {
 
   describe("details / detailsAll", () => {
     it("aggregates ids from every injected usage provider", () => {
-      const tag = repo.insert({ id: 0, label: "sci-fi" } as Tag);
+      const tag = repo.insert({ id: 0, label: "sci-fi" });
       const authors: TagUsageProvider = { allForTag: () => [{ id: 1 }, { id: 2 }] };
       const rootFolders: TagUsageProvider = { allForTag: () => [{ id: 10 }] };
       const svc = new TagService(repo, { authors, rootFolders });
@@ -122,7 +125,7 @@ describe("TagService", () => {
     });
 
     it("omitted providers report empty (tag is never 'in use' with zero providers wired up)", () => {
-      const tag = repo.insert({ id: 0, label: "sci-fi" } as Tag);
+      const tag = repo.insert({ id: 0, label: "sci-fi" });
 
       const details = service.details(tag.id);
 
@@ -131,9 +134,9 @@ describe("TagService", () => {
     });
 
     it("detailsAll returns details for every tag, in label order", () => {
-      repo.insert({ id: 0, label: "zebra" } as Tag);
-      repo.insert({ id: 0, label: "alpha" } as Tag);
-      repo.insert({ id: 0, label: "sci-fi" } as Tag);
+      repo.insert({ id: 0, label: "zebra" });
+      repo.insert({ id: 0, label: "alpha" });
+      repo.insert({ id: 0, label: "sci-fi" });
 
       const all = service.detailsAll();
 
@@ -145,7 +148,7 @@ describe("TagService", () => {
     it("deletes an unused tag and fires onTagsUpdated", () => {
       const onTagsUpdated = vi.fn();
       ({ repo, service } = makeService(onTagsUpdated));
-      const seeded = repo.insert({ id: 0, label: "sci-fi" } as Tag);
+      const seeded = repo.insert({ id: 0, label: "sci-fi" });
 
       service.delete(seeded.id);
 
@@ -154,13 +157,13 @@ describe("TagService", () => {
     });
 
     it("refuses to delete a tag still in use, throwing ModelConflictException with the C#-ported message", () => {
-      const tag = repo.insert({ id: 0, label: "sci-fi" } as Tag);
+      const tag = repo.insert({ id: 0, label: "sci-fi" });
       const authors: TagUsageProvider = { allForTag: () => [{ id: 1 }] };
       const svc = new TagService(repo, { authors });
 
       expect(() => svc.delete(tag.id)).toThrow(ModelConflictException);
       expect(() => svc.delete(tag.id)).toThrow(
-        `Tag with ID ${tag.id} 'sci-fi' cannot be deleted since it's still in use`,
+        `Tag with ID ${tag.id} 'sci-fi' cannot be deleted since it's still in use`
       );
       expect(repo.find(tag.id)).toBeDefined();
     });

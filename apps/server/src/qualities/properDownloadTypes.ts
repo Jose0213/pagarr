@@ -9,7 +9,4 @@
  * source -- so code that ports other parts of NzbDrone.Core/Qualities can
  * import it from its "real" home without a second, duplicate definition.
  */
-export {
-  PROPER_DOWNLOAD_TYPES_VALUES,
-  type ProperDownloadTypes,
-} from "../config/enums.js";
+export { PROPER_DOWNLOAD_TYPES_VALUES, type ProperDownloadTypes } from "../config/enums.js";

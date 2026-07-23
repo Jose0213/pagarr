@@ -9,6 +9,20 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # 22.14.0: the pinned minimum -- confirmed the first version past the
+        # node:sqlite --experimental-sqlite flag boundary (dropped in 22.13.0)
+        # and, separately, the boundary below which JS's RegExp doesn't
+        # support duplicate named capture groups across `|` alternation
+        # branches (a real bug found via this exact CI matrix once already --
+        # see git log "Fix CI: split PartOrSetRegex..."). This is the actual
+        # floor this project supports; catches engine-behavior gaps that a
+        # newer local Node silently accepts.
+        # 24: latest LTS-track Node, catches the opposite direction (newer
+        # engine behavior/deprecations this project shouldn't rely on either).
+        node-version: [22.14.0, 24]
     steps:
       - uses: actions/checkout@v4
 
@@ -18,21 +32,23 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          # node:sqlite (used by the Datastore module) shipped experimental
-          # in 22.5.0 but required the --experimental-sqlite flag until
-          # 22.13.0, which dropped that requirement. Pin to a version
-          # confirmed past that boundary -- verified against Node's own
-          # doc/api/sqlite.md per tag, not assumed from the "22.5+" release
-          # note alone (that mismatch is what broke the first CI run).
-          node-version: 22.14.0
+          node-version: ${{ matrix.node-version }}
           cache: pnpm
 
       - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck
+      - run: pnpm lint
+      - run: pnpm format:check
+      # Regex-literal compatibility check must run on the pinned minimum
+      # Node to mean anything -- see check-regex-compat.mjs's own doc
+      # comment: it can only catch a Node-version-boundary regex bug on the
+      # Node version where that boundary actually applies.
+      - run: pnpm check:regex
+        if: matrix.node-version == '22.14.0'
       # --experimental-sqlite kept as a belt-and-suspenders safety net in
       # case the pinned version above ever regresses to needing it again;
       # harmless no-op flag on versions where it's no longer required.
-      - run: pnpm test
+      - run: pnpm test:coverage
         env:
           NODE_OPTIONS: --experimental-sqlite
       - run: pnpm build

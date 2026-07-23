@@ -62,7 +62,11 @@ describe("MetadataProfileService", () => {
     });
 
     it("init_should_move_existing_none_profile: renames the pre-existing non-empty 'None' profile to 'None.1'", () => {
-      const existingNone = newMetadataProfile({ id: 10, name: NONE_PROFILE_NAME, minPopularity: 5 });
+      const existingNone = newMetadataProfile({
+        id: 10,
+        name: NONE_PROFILE_NAME,
+        minPopularity: 5,
+      });
       const other = newMetadataProfile({ id: 11, name: "Other" });
       const update = vi.fn();
       const insert = vi.fn((p: MetadataProfile) => ({ ...p, id: 99 }));
@@ -140,7 +144,10 @@ describe("MetadataProfileService", () => {
       const profile = newMetadataProfile({ id: 1, name: "Free" });
       const repo = makeRepo({ get: vi.fn(() => profile) });
       const service = new MetadataProfileService(repo, {
-        authorService: { findById: () => undefined, getAllAuthors: () => [{ metadataProfileId: 2 }] },
+        authorService: {
+          findById: () => undefined,
+          getAllAuthors: () => [{ metadataProfileId: 2 }],
+        },
         importListFactory: { all: () => [{ metadataProfileId: 2 }] },
         rootFolderService: { all: () => [{ defaultMetadataProfileId: 2 }] },
       });
@@ -185,7 +192,10 @@ describe("MetadataProfileService", () => {
       const lowPop = book({ foreignBookId: "low", ratings: { votes: 1, value: 1 } });
       const highPop = book({ foreignBookId: "high", ratings: { votes: 100, value: 10 } });
 
-      const result = service.filterBooks({ foreignAuthorId: "a1", series: [], books: [lowPop, highPop] }, 1);
+      const result = service.filterBooks(
+        { foreignAuthorId: "a1", series: [], books: [lowPop, highPop] },
+        1
+      );
 
       expect(result.map((b) => b.foreignBookId)).toEqual(["high"]);
     });
@@ -210,7 +220,10 @@ describe("MetadataProfileService", () => {
 
       const superPopular = book({ foreignBookId: "b1", ratings: { votes: 100000, value: 10 } });
 
-      const result = service.filterBooks({ foreignAuthorId: "a1", series: [], books: [superPopular] }, 1);
+      const result = service.filterBooks(
+        { foreignAuthorId: "a1", series: [], books: [superPopular] },
+        1
+      );
       expect(result).toEqual([]);
     });
 
@@ -221,7 +234,10 @@ describe("MetadataProfileService", () => {
       const noDate = book({ foreignBookId: "nodate", releaseDate: null });
       const withDate = book({ foreignBookId: "withdate" });
 
-      const result = service.filterBooks({ foreignAuthorId: "a1", series: [], books: [noDate, withDate] }, 1);
+      const result = service.filterBooks(
+        { foreignAuthorId: "a1", series: [], books: [noDate, withDate] },
+        1
+      );
       expect(result.map((b) => b.foreignBookId)).toEqual(["withdate"]);
     });
 
@@ -232,7 +248,10 @@ describe("MetadataProfileService", () => {
       const badTitle = book({ foreignBookId: "bad", title: "Some Bad Title Here" });
       const goodTitle = book({ foreignBookId: "good", title: "A Fine Title" });
 
-      const result = service.filterBooks({ foreignAuthorId: "a1", series: [], books: [badTitle, goodTitle] }, 1);
+      const result = service.filterBooks(
+        { foreignAuthorId: "a1", series: [], books: [badTitle, goodTitle] },
+        1
+      );
       expect(result.map((b) => b.foreignBookId)).toEqual(["good"]);
     });
 
@@ -293,7 +312,10 @@ describe("MetadataProfileService", () => {
         editions: [{ ...book().editions[0]!, language: "fre" }],
       });
 
-      const result = service.filterBooks({ foreignAuthorId: "a1", series: [], books: [frenchOnly] }, 1);
+      const result = service.filterBooks(
+        { foreignAuthorId: "a1", series: [], books: [frenchOnly] },
+        1
+      );
       expect(result).toEqual([]);
     });
 

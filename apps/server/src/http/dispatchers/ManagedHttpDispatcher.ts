@@ -97,10 +97,16 @@ export class ManagedHttpDispatcher implements IHttpDispatcher {
 
       const responseHeaders = this.toHttpHeader(response.headers);
 
-      return new HttpResponse(request, responseHeaders, data, response.status, this.httpVersion(response));
+      return new HttpResponse(
+        request,
+        responseHeaders,
+        data,
+        response.status,
+        this.httpVersion(response)
+      );
     } catch (err) {
       if (controller.signal.aborted) {
-        throw new Error(`Http request timed out: ${request.url.toString()}`);
+        throw new Error(`Http request timed out: ${request.url.toString()}`, { cause: err });
       }
 
       throw err;

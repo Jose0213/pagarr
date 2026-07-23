@@ -89,7 +89,7 @@ describe("RootFolderRepository", () => {
           outputProfile: 0,
           useSsl: false,
         },
-      }),
+      })
     );
 
     const fetched = repo.get(inserted.id);

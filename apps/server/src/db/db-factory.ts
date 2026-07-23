@@ -125,7 +125,10 @@ export function createDatabase(name: string, options: CreateDatabaseOptions): ID
   return new Database(name, sqlite);
 }
 
-export function createMainDatabase(path: string, migrationsDir = DEFAULT_MAIN_MIGRATIONS_DIR): MainDatabase {
+export function createMainDatabase(
+  path: string,
+  migrationsDir = DEFAULT_MAIN_MIGRATIONS_DIR
+): MainDatabase {
   return new MainDatabase(createDatabase("Main", { path, migrationsDir }));
 }
 
@@ -133,6 +136,9 @@ export function createLogDatabase(path: string, migrationsDir: string | null = n
   return new LogDatabase(createDatabase("Log", { path, migrationsDir }));
 }
 
-export function createCacheDatabase(path: string, migrationsDir: string | null = null): CacheDatabase {
+export function createCacheDatabase(
+  path: string,
+  migrationsDir: string | null = null
+): CacheDatabase {
   return new CacheDatabase(createDatabase("Cache", { path, migrationsDir }));
 }

@@ -27,7 +27,7 @@ agents to port from).
 - **DI container replacement:** plain constructor injection / factory
   functions passed explicitly. Readarr's C# DI (`NzbDrone.Common` service
   registration) doesn't have a direct TS equivalent and doesn't need one --
-  port the *behavior* of each service class, not the container.
+  port the _behavior_ of each service class, not the container.
 - **Frontend:** React (already the case in Readarr's own frontend/ -- this is
   the one part of Readarr that's already close to a straight port, since it's
   already JS/React, not C#).
@@ -39,13 +39,16 @@ modules port in parallel. Dependent modules wait for their prerequisites to
 land on `port-main` after review.
 
 ### Phase 0 -- Foundation (built directly, not via agent/worktree)
+
 Everything else depends on this existing first.
+
 - Project scaffold (package.json, tsconfig, Fastify app shell)
 - `Datastore` (92 files) -- db client, migration runner, base repository pattern
 - `Configuration` (15 files) -- app config/settings storage
 - `Http` (8 files) -- shared HTTP client wrapper (ported from `NzbDrone.Common.Http`)
 
 ### Phase 1 -- Core domain model (parallel worktrees, depend only on Phase 0)
+
 - `Books` (80 files) -- author/book/edition/series entities + services
 - `Qualities` (11 files) -- quality definitions
 - `Profiles` (23 files) -- quality profiles, metadata profiles
@@ -117,7 +120,7 @@ everyone else's Phase 3 work. Worktrees to stage once Phase 2 lands on
   Skipping ~11 other client integrations no one runs, matching this
   project's original clean-room task #9 scope.
 - `download-tracking` -- `Download/{History,Pending,TrackedDownloads,
-  Aggregation}/` + orchestration (`CompletedDownloadService.cs`,
+Aggregation}/` + orchestration (`CompletedDownloadService.cs`,
   `DownloadService.cs`, `DownloadProcessingService.cs`,
   `FailedDownloadService.cs`, `IgnoredDownloadService.cs`,
   `NzbValidationService.cs`, `ProcessDownloadDecisions.cs`,
@@ -154,6 +157,7 @@ everyone else's Phase 3 work. Worktrees to stage once Phase 2 lands on
   module.
 
 ### Phase 4 -- Ops/UX layer (parallel worktrees, depend on Phase 0-3)
+
 - `Notifications` (176 files, second-largest -- mostly N similar notifier
   implementations, highly parallelizable across sub-agents by notifier)
 - `HealthCheck` (37 files)
@@ -179,6 +183,7 @@ everyone else's Phase 3 work. Worktrees to stage once Phase 2 lands on
   which no longer exist)
 
 ### Phase 5 -- API + Frontend
+
 - `Readarr.Api.V1` (155 files) -- REST endpoint layer over the ported core
 - `frontend/` (985 JS/JSX files) -- already React; port to TS incrementally,
   wire against the new API

@@ -27,9 +27,7 @@ describe("QualityDefinitionRepository (against the real migrated schema)", () =>
   });
 
   it("inserts a definition and round-trips the Quality object through the int column", () => {
-    const inserted = repo.insert(
-      newQualityDefinition(Quality.EPUB, { minSize: 0, maxSize: 350 })
-    );
+    const inserted = repo.insert(newQualityDefinition(Quality.EPUB, { minSize: 0, maxSize: 350 }));
 
     expect(inserted.id).toBeGreaterThan(0);
 
@@ -81,7 +79,10 @@ describe("QualityDefinitionRepository (against the real migrated schema)", () =>
   });
 
   it("deleteMany removes the given definitions", () => {
-    const [a, b] = repo.insertMany([newQualityDefinition(Quality.MOBI), newQualityDefinition(Quality.EPUB)]);
+    const [a, b] = repo.insertMany([
+      newQualityDefinition(Quality.MOBI),
+      newQualityDefinition(Quality.EPUB),
+    ]);
 
     repo.deleteMany([a!]);
 
@@ -93,11 +94,15 @@ describe("QualityDefinitionRepository (against the real migrated schema)", () =>
   it("enforces the Quality column's UNIQUE constraint from the migrated schema", () => {
     repo.insert(newQualityDefinition(Quality.MOBI, { minSize: 0, maxSize: 100 }));
 
-    expect(() => repo.insert(newQualityDefinition(Quality.MOBI, { minSize: 0, maxSize: 200 }))).toThrow();
+    expect(() =>
+      repo.insert(newQualityDefinition(Quality.MOBI, { minSize: 0, maxSize: 200 }))
+    ).toThrow();
   });
 
   it("groupWeight/weight are not persisted -- always come back as the qualityDefinition.ts defaults", () => {
-    const inserted = repo.insert(newQualityDefinition(Quality.MOBI, { weight: 999, groupWeight: 999 }));
+    const inserted = repo.insert(
+      newQualityDefinition(Quality.MOBI, { weight: 999, groupWeight: 999 })
+    );
 
     const fetched = repo.get(inserted.id);
     expect(fetched.weight).toBe(0);

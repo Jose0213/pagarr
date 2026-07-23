@@ -3,7 +3,7 @@ import { MonitorNewBookService } from "../monitorNewBookService.js";
 import { NewItemMonitorTypes, newBook, type Book } from "../models.js";
 
 function book(overrides: Partial<Book> = {}): Book {
-  return { ...newBook(), ...overrides } as Book;
+  return { ...newBook(), ...overrides };
 }
 
 describe("MonitorNewBookService", () => {
@@ -12,7 +12,11 @@ describe("MonitorNewBookService", () => {
   it("None: never monitors", () => {
     expect(service.shouldMonitorNewBook(book(), [], NewItemMonitorTypes.None)).toBe(false);
     expect(
-      service.shouldMonitorNewBook(book({ releaseDate: "2099-01-01T00:00:00.000Z" }), [], NewItemMonitorTypes.None)
+      service.shouldMonitorNewBook(
+        book({ releaseDate: "2099-01-01T00:00:00.000Z" }),
+        [],
+        NewItemMonitorTypes.None
+      )
     ).toBe(false);
   });
 
@@ -28,11 +32,19 @@ describe("MonitorNewBookService", () => {
       ];
 
       expect(
-        service.shouldMonitorNewBook(book({ releaseDate: "2021-06-01T00:00:00.000Z" }), existing, NewItemMonitorTypes.New)
+        service.shouldMonitorNewBook(
+          book({ releaseDate: "2021-06-01T00:00:00.000Z" }),
+          existing,
+          NewItemMonitorTypes.New
+        )
       ).toBe(true);
 
       expect(
-        service.shouldMonitorNewBook(book({ releaseDate: "2021-01-01T00:00:00.000Z" }), existing, NewItemMonitorTypes.New)
+        service.shouldMonitorNewBook(
+          book({ releaseDate: "2021-01-01T00:00:00.000Z" }),
+          existing,
+          NewItemMonitorTypes.New
+        )
       ).toBe(true); // equal to latest: still true (>=)
     });
 
@@ -43,7 +55,11 @@ describe("MonitorNewBookService", () => {
       ];
 
       expect(
-        service.shouldMonitorNewBook(book({ releaseDate: "2019-01-01T00:00:00.000Z" }), existing, NewItemMonitorTypes.New)
+        service.shouldMonitorNewBook(
+          book({ releaseDate: "2019-01-01T00:00:00.000Z" }),
+          existing,
+          NewItemMonitorTypes.New
+        )
       ).toBe(false);
     });
 
@@ -52,19 +68,31 @@ describe("MonitorNewBookService", () => {
 
       // Any real release date is >= MinValue, so a dated new book is monitored.
       expect(
-        service.shouldMonitorNewBook(book({ releaseDate: "2020-01-01T00:00:00.000Z" }), existingNoDates, NewItemMonitorTypes.New)
+        service.shouldMonitorNewBook(
+          book({ releaseDate: "2020-01-01T00:00:00.000Z" }),
+          existingNoDates,
+          NewItemMonitorTypes.New
+        )
       ).toBe(true);
 
       // An undated new book compared against dated existing books: MinValue < any real date -> false.
       const existingDated = [book({ releaseDate: "2020-01-01T00:00:00.000Z" })];
-      expect(service.shouldMonitorNewBook(book({ releaseDate: null }), existingDated, NewItemMonitorTypes.New)).toBe(
-        false
-      );
+      expect(
+        service.shouldMonitorNewBook(
+          book({ releaseDate: null }),
+          existingDated,
+          NewItemMonitorTypes.New
+        )
+      ).toBe(false);
     });
 
     it("with no existing books, the latest is MinValue so any real release date monitors", () => {
       expect(
-        service.shouldMonitorNewBook(book({ releaseDate: "2020-01-01T00:00:00.000Z" }), [], NewItemMonitorTypes.New)
+        service.shouldMonitorNewBook(
+          book({ releaseDate: "2020-01-01T00:00:00.000Z" }),
+          [],
+          NewItemMonitorTypes.New
+        )
       ).toBe(true);
     });
   });

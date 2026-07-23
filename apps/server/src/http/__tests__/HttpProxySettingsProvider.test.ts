@@ -41,7 +41,9 @@ describe("HttpProxySettingsProvider", () => {
 
   it("does not bypass a non-local host", () => {
     const provider = new HttpProxySettingsProvider(config());
-    expect(provider.getProxySettingsForUri(new HttpUri("https://indexer.example.com/api"))).not.toBeNull();
+    expect(
+      provider.getProxySettingsForUri(new HttpUri("https://indexer.example.com/api"))
+    ).not.toBeNull();
   });
 
   it("bypasses hosts matching a wildcard entry in the bypass filter", () => {
@@ -52,7 +54,9 @@ describe("HttpProxySettingsProvider", () => {
     expect(
       provider.getProxySettingsForUri(new HttpUri("https://indexer.internal.example.com/api"))
     ).toBeNull();
-    expect(provider.getProxySettingsForUri(new HttpUri("https://public.example.com/api"))).not.toBeNull();
+    expect(
+      provider.getProxySettingsForUri(new HttpUri("https://public.example.com/api"))
+    ).not.toBeNull();
   });
 
   it("bypasses hosts within a CIDR range in the bypass filter", () => {

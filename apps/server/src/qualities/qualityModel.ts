@@ -52,8 +52,12 @@ export function qualityModelToString(model: QualityModel): string {
  * First` finding no match).
  */
 export function compareQualityModels(left: QualityModel, right: QualityModel): number {
-  const definition = Quality.DefaultQualityDefinitions.find((d) => d.quality.id === left.quality.id);
-  const otherDefinition = Quality.DefaultQualityDefinitions.find((d) => d.quality.id === right.quality.id);
+  const definition = Quality.DefaultQualityDefinitions.find(
+    (d) => d.quality.id === left.quality.id
+  );
+  const otherDefinition = Quality.DefaultQualityDefinitions.find(
+    (d) => d.quality.id === right.quality.id
+  );
 
   if (!definition || !otherDefinition) {
     throw new Error("Sequence contains no matching element");

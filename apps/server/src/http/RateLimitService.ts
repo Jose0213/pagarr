@@ -21,7 +21,11 @@ export class RateLimitService implements IRateLimitService {
     this.sleep = sleep;
   }
 
-  async waitAndPulse(key: string, subKeyOrInterval: string | null | number, intervalMs?: number): Promise<void> {
+  async waitAndPulse(
+    key: string,
+    subKeyOrInterval: string | null | number,
+    intervalMs?: number
+  ): Promise<void> {
     let subKey: string | null;
     let interval: number;
 
@@ -45,7 +49,9 @@ export class RateLimitService implements IRateLimitService {
 
     if (subKey !== null && subKey !== "") {
       // Expand the base key timer, but don't extend it beyond now+interval.
-      const baseUntil = this.addOrUpdate(key, waitUntil, (existing) => Math.max(waitUntil, existing));
+      const baseUntil = this.addOrUpdate(key, waitUntil, (existing) =>
+        Math.max(waitUntil, existing)
+      );
 
       if (baseUntil > waitUntil) {
         waitUntil = baseUntil;
@@ -57,7 +63,9 @@ export class RateLimitService implements IRateLimitService {
         Math.max(waitUntil, existing + interval)
       );
     } else {
-      waitUntil = this.addOrUpdate(key, waitUntil, (existing) => Math.max(waitUntil, existing + interval));
+      waitUntil = this.addOrUpdate(key, waitUntil, (existing) =>
+        Math.max(waitUntil, existing + interval)
+      );
     }
 
     waitUntil -= interval;

@@ -62,7 +62,7 @@ export class RootFolderService implements IRootFolderService {
   constructor(
     private readonly rootFolderRepository: IRootFolderRepository,
     private readonly diskProvider: IDiskProvider,
-    options: RootFolderServiceOptions = {},
+    options: RootFolderServiceOptions = {}
   ) {
     this.onRootFolderAdded = options.onRootFolderAdded;
     this.onError = options.onError;
@@ -106,7 +106,7 @@ export class RootFolderService implements IRootFolderService {
 
     if (!(await this.diskProvider.folderWritable(rootFolder.path))) {
       throw new UnauthorizedAccessError(
-        `Root folder path '${rootFolder.path}' is not writable by user '${process.env["USERNAME"] ?? process.env["USER"] ?? ""}'`,
+        `Root folder path '${rootFolder.path}' is not writable by user '${process.env["USERNAME"] ?? process.env["USER"] ?? ""}'`
       );
     }
   }
@@ -192,6 +192,10 @@ export class RootFolderService implements IRootFolderService {
    * behavior is preserved for parity with slow/hung network-mount cases.
    */
   private async getDetails(rootFolder: RootFolder): Promise<void> {
+    // Deliberately async with no internal await: this needs to return a
+    // Promise for Promise.race below even though diskProvider's calls are
+    // synchronous fs here, per this method's doc comment.
+    // eslint-disable-next-line @typescript-eslint/require-await
     const probe = async (): Promise<void> => {
       if (this.diskProvider.folderExists(rootFolder.path)) {
         rootFolder.accessible = true;
@@ -200,10 +204,7 @@ export class RootFolderService implements IRootFolderService {
       }
     };
 
-    await Promise.race([
-      probe(),
-      new Promise<void>((resolve) => setTimeout(resolve, 5000)),
-    ]);
+    await Promise.race([probe(), new Promise<void>((resolve) => setTimeout(resolve, 5000))]);
   }
 }
 
@@ -213,7 +214,7 @@ function getDirectory(path: string): string {
   const trimmed = path.replace(/[/\\]+$/, "");
   const lastSepIndex = [...trimmed].reduce<number>(
     (idx, ch, i) => (separators.test(ch) ? i : idx),
-    -1,
+    -1
   );
 
   if (lastSepIndex === -1) {

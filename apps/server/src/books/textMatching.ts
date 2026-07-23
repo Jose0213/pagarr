@@ -119,7 +119,8 @@ export function findByStringInexact<T>(
 
   let thresholdCutoff = scored.length;
   for (let i = 0; i < scored.length; i++) {
-    const ok = scored[i]!.matchProb > fuzzThreshold || (i > 0 && scored[i - 1]!.matchProb > fuzzThreshold);
+    const ok =
+      scored[i]!.matchProb > fuzzThreshold || (i > 0 && scored[i - 1]!.matchProb > fuzzThreshold);
     if (!ok) {
       thresholdCutoff = i;
       break;

@@ -86,7 +86,7 @@ function parseOr<T>(value: string | null | undefined, fallback: T): T {
     return fallback;
   }
   if (typeof value !== "string") {
-    return value as unknown as T;
+    return value;
   }
   return JSON.parse(value) as T;
 }
@@ -96,7 +96,7 @@ function parseOrUndefined<T>(value: string | null | undefined): T | undefined {
     return undefined;
   }
   if (typeof value !== "string") {
-    return value as unknown as T;
+    return value;
   }
   return JSON.parse(value) as T;
 }
@@ -133,7 +133,7 @@ function metadataRowToModel(row: AuthorMetadataRow): AuthorMetadata {
     sortName: row.SortName,
     nameLastFirst: row.NameLastFirst,
     sortNameLastFirst: row.SortNameLastFirst,
-    aliases: row.Aliases ? JSON.parse(row.Aliases) : [],
+    aliases: parseOr<string[]>(row.Aliases, []),
     overview: row.Overview,
     disambiguation: row.Disambiguation,
     gender: row.Gender,
@@ -141,10 +141,10 @@ function metadataRowToModel(row: AuthorMetadataRow): AuthorMetadata {
     born: row.Born,
     died: row.Died,
     status: row.Status,
-    images: row.Images ? JSON.parse(row.Images) : [],
-    links: row.Links ? JSON.parse(row.Links) : [],
-    genres: row.Genres ? JSON.parse(row.Genres) : [],
-    ratings: row.Ratings ? JSON.parse(row.Ratings) : { votes: 0, value: 0 },
+    images: parseOr(row.Images, []),
+    links: parseOr(row.Links, []),
+    genres: parseOr<string[]>(row.Genres, []),
+    ratings: parseOr(row.Ratings, { votes: 0, value: 0 }),
   };
 }
 
@@ -203,7 +203,7 @@ export class AuthorRepository extends BasicRepository<Author> {
     return deserialize(super.upsert(serialize(model)));
   }
 
-  override setFields(model: Author, properties: (Exclude<keyof Author, "id"> & string)[]): void {
+  override setFields(model: Author, properties: Exclude<keyof Author, "id">[]): void {
     super.setFields(serialize(model), properties);
   }
 
@@ -242,8 +242,8 @@ export class AuthorRepository extends BasicRepository<Author> {
       added: row["Added"] as string | null,
       qualityProfileId: row["QualityProfileId"] as number,
       metadataProfileId: row["MetadataProfileId"] as number,
-      tags: row["Tags"] ? JSON.parse(row["Tags"] as string) : [],
-      addOptions: row["AddOptions"] ? JSON.parse(row["AddOptions"] as string) : undefined,
+      tags: parseOr<number[]>(row["Tags"] as string | null, []),
+      addOptions: parseOrUndefined(row["AddOptions"] as string | null | undefined),
     };
 
     author.metadata = metadataRowToModel({
@@ -301,7 +301,9 @@ export class AuthorRepository extends BasicRepository<Author> {
 
   /** Ported from AuthorRepository.AllAuthorPaths(): raw `SELECT Id, Path FROM Authors` -> Dictionary. */
   allAuthorPaths(): Map<number, string> {
-    const rows = this.db().prepare('SELECT "Id" as "Key", "Path" as "Value" FROM "Authors"').all() as {
+    const rows = this.db()
+      .prepare('SELECT "Id" as "Key", "Path" as "Value" FROM "Authors"')
+      .all() as {
       Key: number;
       Value: string;
     }[];

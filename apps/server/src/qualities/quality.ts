@@ -37,7 +37,10 @@ function makeQuality(id: number, name: string): Quality {
 }
 
 /** Ported from `Quality.Equals(Quality other)` / `operator ==`: equality by Id only. */
-export function qualitiesEqual(left: Quality | null | undefined, right: Quality | null | undefined): boolean {
+export function qualitiesEqual(
+  left: Quality | null | undefined,
+  right: Quality | null | undefined
+): boolean {
   if (left === null || left === undefined || right === null || right === undefined) {
     return left === right;
   }
@@ -46,7 +49,10 @@ export function qualitiesEqual(left: Quality | null | undefined, right: Quality 
 }
 
 /** Ported from `Quality.operator !=`. */
-export function qualitiesNotEqual(left: Quality | null | undefined, right: Quality | null | undefined): boolean {
+export function qualitiesNotEqual(
+  left: Quality | null | undefined,
+  right: Quality | null | undefined
+): boolean {
   return !qualitiesEqual(left, right);
 }
 

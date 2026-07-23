@@ -30,7 +30,12 @@ describe("ReleaseProfileService", () => {
     const unrelated = newReleaseProfile({ id: 3, tags: new Set([99]) });
     const service = makeService([tagged, untagged, unrelated]);
 
-    expect(service.allForTags(new Set([5])).map((r) => r.id).sort()).toEqual([1, 2]);
+    expect(
+      service
+        .allForTags(new Set([5]))
+        .map((r) => r.id)
+        .sort()
+    ).toEqual([1, 2]);
   });
 
   it("enabledForTags further filters to Enabled profiles scoped to this indexer or global (IndexerId 0)", () => {
@@ -41,7 +46,10 @@ describe("ReleaseProfileService", () => {
 
     const service = makeService([globalEnabled, scopedEnabled, scopedOtherIndexer, disabled]);
 
-    const result = service.enabledForTags(new Set(), 7).map((r) => r.id).sort();
+    const result = service
+      .enabledForTags(new Set(), 7)
+      .map((r) => r.id)
+      .sort();
     expect(result).toEqual([1, 2]);
   });
 });

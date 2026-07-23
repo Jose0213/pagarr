@@ -30,7 +30,7 @@ describe("SeriesService", () => {
       workCount: 1,
       primaryWorkCount: 1,
       ...overrides,
-    } as Series;
+    };
   }
 
   it("findById (single string) delegates to repository.findById", () => {

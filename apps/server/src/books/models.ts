@@ -195,7 +195,10 @@ export function newAuthorMetadata(): Omit<AuthorMetadata, keyof ModelBase> & { i
  * empty/zero (Overview when blank, Images when empty, Ratings when
  * Votes == 0) -- exactly the C# original's conditional-keep logic.
  */
-export function useMetadataFromAuthorMetadata(existing: AuthorMetadata, other: AuthorMetadata): AuthorMetadata {
+export function useMetadataFromAuthorMetadata(
+  existing: AuthorMetadata,
+  other: AuthorMetadata
+): AuthorMetadata {
   return {
     ...existing,
     foreignAuthorId: other.foreignAuthorId,
@@ -267,7 +270,10 @@ export interface SeriesBookLink extends ModelBase {
 }
 
 /** Ported from SeriesBookLink.UseMetadataFrom(SeriesBookLink other). */
-export function useMetadataFromSeriesBookLink(existing: SeriesBookLink, other: SeriesBookLink): SeriesBookLink {
+export function useMetadataFromSeriesBookLink(
+  existing: SeriesBookLink,
+  other: SeriesBookLink
+): SeriesBookLink {
   return {
     ...existing,
     position: other.position,

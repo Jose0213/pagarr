@@ -117,6 +117,8 @@ describe("QualityProfileRepository", () => {
   });
 
   it("insert() throws for a non-zero id, matching BasicRepository's guard", () => {
-    expect(() => repo.insert(newQualityProfile({ name: "Bad", ...{ id: 5 } }))).toThrow(/existing ID 5/);
+    expect(() => repo.insert(newQualityProfile({ name: "Bad", ...{ id: 5 } }))).toThrow(
+      /existing ID 5/
+    );
   });
 });

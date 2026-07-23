@@ -101,7 +101,9 @@ describe("ConfigService defaults", () => {
     const hmacPassphrase = service.hmacPassphrase;
     const rijndaelSalt = service.rijndaelSalt;
     const hmacSalt = service.hmacSalt;
-    expect(new Set([plexId, rijndaelPassphrase, hmacPassphrase, rijndaelSalt, hmacSalt]).size).toBe(5);
+    expect(new Set([plexId, rijndaelPassphrase, hmacPassphrase, rijndaelSalt, hmacSalt]).size).toBe(
+      5
+    );
   });
 });
 

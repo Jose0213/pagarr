@@ -14,7 +14,10 @@ describe("HttpRequestBuilder", () => {
   });
 
   it("sets method to POST via post()", () => {
-    const request = new HttpRequestBuilder("https://api.example.com").resource("books").post().build();
+    const request = new HttpRequestBuilder("https://api.example.com")
+      .resource("books")
+      .post()
+      .build();
 
     expect(request.method).toBe("POST");
   });
@@ -28,7 +31,9 @@ describe("HttpRequestBuilder", () => {
   });
 
   it("applies HttpAccept as the Accept header", () => {
-    const request = new HttpRequestBuilder("https://api.example.com").accept(HttpAccept.Json).build();
+    const request = new HttpRequestBuilder("https://api.example.com")
+      .accept(HttpAccept.Json)
+      .build();
 
     expect(request.headers.accept).toBe("application/json");
   });
@@ -109,9 +114,13 @@ describe("HttpRequestBuilder", () => {
       }
     }
 
-    const builder = new PrePopulatedBuilder("https://api.example.com").post().addFormParameter("a", "1");
+    const builder = new PrePopulatedBuilder("https://api.example.com")
+      .post()
+      .addFormParameter("a", "1");
 
-    expect(() => builder.build()).toThrow(/Cannot send HttpRequest Body and FormData simultaneously/);
+    expect(() => builder.build()).toThrow(
+      /Cannot send HttpRequest Body and FormData simultaneously/
+    );
   });
 
   it("clone() deep-copies mutable collections so mutating the clone doesn't affect the original", () => {
@@ -139,7 +148,9 @@ describe("HttpRequestBuilder", () => {
   });
 
   it("host/port constructor overload builds the expected base URL", () => {
-    const request = new HttpRequestBuilder(true, "indexer.local", 9117, "torznab").resource("api").build();
+    const request = new HttpRequestBuilder(true, "indexer.local", 9117, "torznab")
+      .resource("api")
+      .build();
     expect(request.url.toString()).toBe("https://indexer.local:9117/torznab/api");
   });
 });

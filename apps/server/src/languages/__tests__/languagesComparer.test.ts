@@ -35,13 +35,7 @@ describe("compareLanguageLists() -- ported from LanguagesComparer.Compare", () =
   });
 
   it("sorts a list of language-lists into the expected faithful order", () => {
-    const lists = [
-      [English, French, German],
-      [],
-      [French],
-      [English],
-      [English, French],
-    ];
+    const lists = [[English, French, German], [], [French], [English], [English, French]];
 
     lists.sort(compareLanguageLists);
 
@@ -54,7 +48,7 @@ describe("compareLanguageLists() -- ported from LanguagesComparer.Compare", () =
       expect.arrayContaining([
         [English, French],
         [English, French, German],
-      ]),
+      ])
     );
     expect(lists[4]).toEqual([]);
   });

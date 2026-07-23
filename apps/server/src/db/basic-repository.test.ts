@@ -61,22 +61,22 @@ describe("BasicRepository", () => {
 
   describe("insert", () => {
     it("inserts a model with id 0 and assigns a generated id", () => {
-      const inserted = repo.insert({ id: 0, name: "Alpha", monitored: true, priority: 1 } as Widget);
+      const inserted = repo.insert({ id: 0, name: "Alpha", monitored: true, priority: 1 });
 
       expect(inserted.id).toBeGreaterThan(0);
       expect(repo.get(inserted.id)).toEqual(inserted);
     });
 
     it("throws if the model already has a non-zero id", () => {
-      expect(() =>
-        repo.insert({ id: 5, name: "Bad", monitored: false, priority: 1 } as Widget)
-      ).toThrow(/existing ID 5/);
+      expect(() => repo.insert({ id: 5, name: "Bad", monitored: false, priority: 1 })).toThrow(
+        /existing ID 5/
+      );
     });
 
     it("insertMany inserts all models transactionally", () => {
       const inserted = repo.insertMany([
-        { id: 0, name: "A", monitored: true, priority: 1 } as Widget,
-        { id: 0, name: "B", monitored: false, priority: 2 } as Widget,
+        { id: 0, name: "A", monitored: true, priority: 1 },
+        { id: 0, name: "B", monitored: false, priority: 2 },
       ]);
 
       expect(inserted).toHaveLength(2);
@@ -85,9 +85,9 @@ describe("BasicRepository", () => {
     });
 
     it("insertMany rejects if any model already has an id", () => {
-      expect(() =>
-        repo.insertMany([{ id: 1, name: "A", monitored: true, priority: 1 } as Widget])
-      ).toThrow(/existing ID/);
+      expect(() => repo.insertMany([{ id: 1, name: "A", monitored: true, priority: 1 }])).toThrow(
+        /existing ID/
+      );
     });
   });
 
@@ -102,17 +102,19 @@ describe("BasicRepository", () => {
     });
 
     it("getMany returns all matching rows", () => {
-      const a = repo.insert({ id: 0, name: "A", monitored: true, priority: 1 } as Widget);
-      const b = repo.insert({ id: 0, name: "B", monitored: false, priority: 2 } as Widget);
+      const a = repo.insert({ id: 0, name: "A", monitored: true, priority: 1 });
+      const b = repo.insert({ id: 0, name: "B", monitored: false, priority: 2 });
 
       const result = repo.getMany([a.id, b.id]);
       expect(result).toHaveLength(2);
     });
 
     it("getMany throws if the returned row count doesn't match requested ids", () => {
-      const a = repo.insert({ id: 0, name: "A", monitored: true, priority: 1 } as Widget);
+      const a = repo.insert({ id: 0, name: "A", monitored: true, priority: 1 });
 
-      expect(() => repo.getMany([a.id, 999])).toThrow(/Expected query to return 2 rows but returned 1/);
+      expect(() => repo.getMany([a.id, 999])).toThrow(
+        /Expected query to return 2 rows but returned 1/
+      );
     });
 
     it("getMany returns an empty array for an empty id list", () => {
@@ -122,7 +124,7 @@ describe("BasicRepository", () => {
 
   describe("update", () => {
     it("updates all columns of an existing model", () => {
-      const inserted = repo.insert({ id: 0, name: "A", monitored: true, priority: 1 } as Widget);
+      const inserted = repo.insert({ id: 0, name: "A", monitored: true, priority: 1 });
 
       const updated = repo.update({ ...inserted, name: "A2", priority: 9 });
 
@@ -131,14 +133,14 @@ describe("BasicRepository", () => {
     });
 
     it("throws if the model has id 0", () => {
-      expect(() => repo.update({ id: 0, name: "X", monitored: true, priority: 1 } as Widget)).toThrow(
+      expect(() => repo.update({ id: 0, name: "X", monitored: true, priority: 1 })).toThrow(
         /Can't update model with ID 0/
       );
     });
 
     it("updateMany updates all given models", () => {
-      const a = repo.insert({ id: 0, name: "A", monitored: true, priority: 1 } as Widget);
-      const b = repo.insert({ id: 0, name: "B", monitored: false, priority: 2 } as Widget);
+      const a = repo.insert({ id: 0, name: "A", monitored: true, priority: 1 });
+      const b = repo.insert({ id: 0, name: "B", monitored: false, priority: 2 });
 
       repo.updateMany([
         { ...a, priority: 10 },
@@ -152,9 +154,11 @@ describe("BasicRepository", () => {
 
   describe("setFields", () => {
     it("updates only the named properties, leaving others untouched", () => {
-      const inserted = repo.insert({ id: 0, name: "A", monitored: true, priority: 1 } as Widget);
+      const inserted = repo.insert({ id: 0, name: "A", monitored: true, priority: 1 });
 
-      repo.setFields({ ...inserted, priority: 42, name: "ignored-should-not-persist" }, ["priority"]);
+      repo.setFields({ ...inserted, priority: 42, name: "ignored-should-not-persist" }, [
+        "priority",
+      ]);
 
       const reloaded = repo.get(inserted.id);
       expect(reloaded.priority).toBe(42);
@@ -163,20 +167,20 @@ describe("BasicRepository", () => {
 
     it("throws if the model has id 0", () => {
       expect(() =>
-        repo.setFields({ id: 0, name: "X", monitored: true, priority: 1 } as Widget, ["priority"])
+        repo.setFields({ id: 0, name: "X", monitored: true, priority: 1 }, ["priority"])
       ).toThrow(/Attempted to update model without ID/);
     });
   });
 
   describe("upsert", () => {
     it("inserts when id is 0", () => {
-      const result = repo.upsert({ id: 0, name: "New", monitored: true, priority: 1 } as Widget);
+      const result = repo.upsert({ id: 0, name: "New", monitored: true, priority: 1 });
       expect(result.id).toBeGreaterThan(0);
       expect(repo.count()).toBe(1);
     });
 
     it("updates when id is non-zero", () => {
-      const inserted = repo.insert({ id: 0, name: "A", monitored: true, priority: 1 } as Widget);
+      const inserted = repo.insert({ id: 0, name: "A", monitored: true, priority: 1 });
       repo.upsert({ ...inserted, name: "Changed" });
 
       expect(repo.get(inserted.id).name).toBe("Changed");
@@ -186,21 +190,21 @@ describe("BasicRepository", () => {
 
   describe("delete", () => {
     it("deletes by id", () => {
-      const inserted = repo.insert({ id: 0, name: "A", monitored: true, priority: 1 } as Widget);
+      const inserted = repo.insert({ id: 0, name: "A", monitored: true, priority: 1 });
       repo.delete(inserted.id);
       expect(repo.find(inserted.id)).toBeUndefined();
     });
 
     it("deletes by model", () => {
-      const inserted = repo.insert({ id: 0, name: "A", monitored: true, priority: 1 } as Widget);
+      const inserted = repo.insert({ id: 0, name: "A", monitored: true, priority: 1 });
       repo.delete(inserted);
       expect(repo.find(inserted.id)).toBeUndefined();
     });
 
     it("deleteMany deletes by a list of ids", () => {
-      const a = repo.insert({ id: 0, name: "A", monitored: true, priority: 1 } as Widget);
-      const b = repo.insert({ id: 0, name: "B", monitored: true, priority: 2 } as Widget);
-      const c = repo.insert({ id: 0, name: "C", monitored: true, priority: 3 } as Widget);
+      const a = repo.insert({ id: 0, name: "A", monitored: true, priority: 1 });
+      const b = repo.insert({ id: 0, name: "B", monitored: true, priority: 2 });
+      const c = repo.insert({ id: 0, name: "C", monitored: true, priority: 3 });
 
       repo.deleteMany([a.id, b.id]);
 
@@ -209,8 +213,8 @@ describe("BasicRepository", () => {
     });
 
     it("deleteMany deletes by a list of models", () => {
-      const a = repo.insert({ id: 0, name: "A", monitored: true, priority: 1 } as Widget);
-      const b = repo.insert({ id: 0, name: "B", monitored: true, priority: 2 } as Widget);
+      const a = repo.insert({ id: 0, name: "A", monitored: true, priority: 1 });
+      const b = repo.insert({ id: 0, name: "B", monitored: true, priority: 2 });
 
       repo.deleteMany([a, b]);
 
@@ -218,7 +222,7 @@ describe("BasicRepository", () => {
     });
 
     it("deleteMany is a no-op for an empty list", () => {
-      repo.insert({ id: 0, name: "A", monitored: true, priority: 1 } as Widget);
+      repo.insert({ id: 0, name: "A", monitored: true, priority: 1 });
       expect(() => repo.deleteMany([])).not.toThrow();
       expect(repo.count()).toBe(1);
     });
@@ -227,13 +231,13 @@ describe("BasicRepository", () => {
   describe("purge/hasItems/count", () => {
     it("hasItems reflects whether the table has rows", () => {
       expect(repo.hasItems()).toBe(false);
-      repo.insert({ id: 0, name: "A", monitored: true, priority: 1 } as Widget);
+      repo.insert({ id: 0, name: "A", monitored: true, priority: 1 });
       expect(repo.hasItems()).toBe(true);
     });
 
     it("purge deletes all rows", () => {
-      repo.insert({ id: 0, name: "A", monitored: true, priority: 1 } as Widget);
-      repo.insert({ id: 0, name: "B", monitored: true, priority: 2 } as Widget);
+      repo.insert({ id: 0, name: "A", monitored: true, priority: 1 });
+      repo.insert({ id: 0, name: "B", monitored: true, priority: 2 });
 
       repo.purge();
 
@@ -243,25 +247,25 @@ describe("BasicRepository", () => {
 
   describe("single/singleOrDefault/all", () => {
     it("all returns every row", () => {
-      repo.insert({ id: 0, name: "A", monitored: true, priority: 1 } as Widget);
-      repo.insert({ id: 0, name: "B", monitored: true, priority: 2 } as Widget);
+      repo.insert({ id: 0, name: "A", monitored: true, priority: 1 });
+      repo.insert({ id: 0, name: "B", monitored: true, priority: 2 });
 
       expect(repo.all()).toHaveLength(2);
     });
 
     it("single throws when there isn't exactly one row", () => {
       expect(() => repo.single()).toThrow();
-      repo.insert({ id: 0, name: "A", monitored: true, priority: 1 } as Widget);
+      repo.insert({ id: 0, name: "A", monitored: true, priority: 1 });
       expect(repo.single().name).toBe("A");
-      repo.insert({ id: 0, name: "B", monitored: true, priority: 2 } as Widget);
+      repo.insert({ id: 0, name: "B", monitored: true, priority: 2 });
       expect(() => repo.single()).toThrow();
     });
 
     it("singleOrDefault returns undefined when empty, throws when >1", () => {
       expect(repo.singleOrDefault()).toBeUndefined();
-      repo.insert({ id: 0, name: "A", monitored: true, priority: 1 } as Widget);
+      repo.insert({ id: 0, name: "A", monitored: true, priority: 1 });
       expect(repo.singleOrDefault()!.name).toBe("A");
-      repo.insert({ id: 0, name: "B", monitored: true, priority: 2 } as Widget);
+      repo.insert({ id: 0, name: "B", monitored: true, priority: 2 });
       expect(() => repo.singleOrDefault()).toThrow();
     });
   });
@@ -274,7 +278,7 @@ describe("BasicRepository", () => {
           name: `Widget${String(i).padStart(2, "0")}`,
           monitored: i % 2 === 0,
           priority: i,
-        } as Widget);
+        });
       }
     });
 
@@ -411,20 +415,24 @@ describe("BasicRepository", () => {
   describe("model events", () => {
     it("does not publish events by default (publishModelEvents = false)", () => {
       const published: ModelEvent<Widget>[] = [];
-      const aggregator: IEventAggregator = { publishEvent: (e) => published.push(e as ModelEvent<Widget>) };
+      const aggregator: IEventAggregator = {
+        publishEvent: (e) => published.push(e as ModelEvent<Widget>),
+      };
       const eventRepo = new WidgetRepository(db, aggregator);
 
-      eventRepo.insert({ id: 0, name: "A", monitored: true, priority: 1 } as Widget);
+      eventRepo.insert({ id: 0, name: "A", monitored: true, priority: 1 });
 
       expect(published).toHaveLength(0);
     });
 
     it("publishes Created/Updated events when publishModelEvents is overridden true", () => {
       const published: ModelEvent<Widget>[] = [];
-      const aggregator: IEventAggregator = { publishEvent: (e) => published.push(e as ModelEvent<Widget>) };
+      const aggregator: IEventAggregator = {
+        publishEvent: (e) => published.push(e as ModelEvent<Widget>),
+      };
       const eventRepo = new PublishingWidgetRepository(db, aggregator);
 
-      const inserted = eventRepo.insert({ id: 0, name: "A", monitored: true, priority: 1 } as Widget);
+      const inserted = eventRepo.insert({ id: 0, name: "A", monitored: true, priority: 1 });
       eventRepo.update({ ...inserted, name: "A2" });
 
       expect(published).toHaveLength(2);

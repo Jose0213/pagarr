@@ -58,10 +58,7 @@ export class HttpProxySettingsProvider implements IHttpProxySettingsProvider {
 
   private isLocalAddress(host: string): boolean {
     return (
-      host === "localhost" ||
-      host === "127.0.0.1" ||
-      host === "::1" ||
-      host.endsWith(".local")
+      host === "localhost" || host === "127.0.0.1" || host === "::1" || host.endsWith(".local")
     );
   }
 
@@ -86,10 +83,7 @@ export class HttpProxySettingsProvider implements IHttpProxySettingsProvider {
       return pattern.toLowerCase() === host.toLowerCase();
     }
 
-    const regex = new RegExp(
-      "^" + pattern.split("*").map(escapeRegex).join(".*") + "$",
-      "i"
-    );
+    const regex = new RegExp("^" + pattern.split("*").map(escapeRegex).join(".*") + "$", "i");
 
     return regex.test(host);
   }

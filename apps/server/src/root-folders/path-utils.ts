@@ -70,7 +70,10 @@ export function pathEquals(firstPath: string, secondPath: string): boolean {
     return true;
   }
 
-  return normalizeForComparison(cleanFilePathBasic(firstPath)) === normalizeForComparison(cleanFilePathBasic(secondPath));
+  return (
+    normalizeForComparison(cleanFilePathBasic(firstPath)) ===
+    normalizeForComparison(cleanFilePathBasic(secondPath))
+  );
 }
 
 /**
@@ -102,7 +105,9 @@ export function isParentPath(parentPath: string, childPath: string): boolean {
   const ancestorSegments = childSegments.slice(0, parentSegments.length);
   return (
     ancestorSegments.length === parentSegments.length &&
-    ancestorSegments.every((seg, i) => normalizeForComparison(seg) === normalizeForComparison(parentSegments[i]!))
+    ancestorSegments.every(
+      (seg, i) => normalizeForComparison(seg) === normalizeForComparison(parentSegments[i]!)
+    )
   );
 }
 

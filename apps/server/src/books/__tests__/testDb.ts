@@ -5,7 +5,11 @@
  * table -- following db/db-factory.test.ts's pattern).
  */
 
-import { createMainDatabase, DEFAULT_MAIN_MIGRATIONS_DIR, type MainDatabase } from "../../db/db-factory.js";
+import {
+  createMainDatabase,
+  DEFAULT_MAIN_MIGRATIONS_DIR,
+  type MainDatabase,
+} from "../../db/db-factory.js";
 
 export function createTestDatabase(): MainDatabase {
   return createMainDatabase(":memory:", DEFAULT_MAIN_MIGRATIONS_DIR);

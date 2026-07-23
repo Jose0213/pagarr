@@ -57,11 +57,11 @@ export class HttpUri {
       }
 
       if (isNotNullOrWhiteSpace(path)) {
-        if (isNotNullOrWhiteSpace(host) || path!.startsWith("/")) {
+        if (isNotNullOrWhiteSpace(host) || path.startsWith("/")) {
           builder += "/";
         }
 
-        builder += path!.replace(/^\/+/, "");
+        builder += path.replace(/^\/+/, "");
       }
 
       if (isNotNullOrWhiteSpace(query)) {

@@ -138,7 +138,12 @@ describe("QualityProfileService", () => {
 
     it("includes a zero-score FormatItem for every registered CustomFormat", () => {
       const repo = makeRepo();
-      const customFormatService = { all: () => [{ id: 1, name: "A" }, { id: 2, name: "B" }] };
+      const customFormatService = {
+        all: () => [
+          { id: 1, name: "A" },
+          { id: 2, name: "B" },
+        ],
+      };
       const service = new QualityProfileService(repo, { customFormatService });
 
       const profile = service.getDefaultProfile("WithFormats");
@@ -151,7 +156,10 @@ describe("QualityProfileService", () => {
 
   describe("customFormat event handlers", () => {
     it("handleCustomFormatAdded prepends a zero-score FormatItem to every profile", () => {
-      const existing = newQualityProfile({ id: 1, formatItems: [{ format: { id: 9, name: "Old" }, score: 5 }] });
+      const existing = newQualityProfile({
+        id: 1,
+        formatItems: [{ format: { id: 9, name: "Old" }, score: 5 }],
+      });
       const update = vi.fn();
       const repo = makeRepo({ all: vi.fn(() => [existing]), update });
 

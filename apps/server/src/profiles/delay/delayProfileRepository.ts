@@ -66,8 +66,7 @@ export class DelayProfileRepository {
 
   find(id: number): DelayProfile | undefined {
     const row = this.conn().prepare('SELECT * FROM "DelayProfiles" WHERE "Id" = ?').get(id) as
-      | Row
-      | undefined;
+      Row | undefined;
     return row ? this.rowToModel(row) : undefined;
   }
 

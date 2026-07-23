@@ -92,7 +92,10 @@ describe("DelayProfileService.reorder", () => {
 describe("DelayProfileService", () => {
   it("add() sets Order to the current repository count, matching Add()'s Order = _repo.Count()", () => {
     const repo = makeRepo([newDelayProfile({ id: 1 })]);
-    (repo.insert as ReturnType<typeof vi.fn>).mockImplementation((p: DelayProfile) => ({ ...p, id: 2 }));
+    (repo.insert as ReturnType<typeof vi.fn>).mockImplementation((p: DelayProfile) => ({
+      ...p,
+      id: 2,
+    }));
 
     const service = new DelayProfileService(repo);
     const created = service.add(newDelayProfile());

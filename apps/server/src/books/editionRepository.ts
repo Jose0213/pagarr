@@ -64,7 +64,7 @@ function parseOr<T>(value: string | null | undefined, fallback: T): T {
     return fallback;
   }
   if (typeof value !== "string") {
-    return value as unknown as T;
+    return value;
   }
   return JSON.parse(value) as T;
 }
@@ -124,7 +124,7 @@ export class EditionRepository extends BasicRepository<Edition> {
     return deserializeEdition(super.upsert(serialize(model)));
   }
 
-  override setFields(model: Edition, properties: (Exclude<keyof Edition, "id"> & string)[]): void {
+  override setFields(model: Edition, properties: Exclude<keyof Edition, "id">[]): void {
     super.setFields(serialize(model), properties);
   }
 
@@ -145,9 +145,9 @@ export class EditionRepository extends BasicRepository<Edition> {
       publisher: row["Publisher"] as string | null,
       pageCount: (row["PageCount"] as number | null) ?? 0,
       releaseDate: row["ReleaseDate"] as string | null,
-      images: row["Images"] ? JSON.parse(row["Images"] as string) : [],
-      links: row["Links"] ? JSON.parse(row["Links"] as string) : [],
-      ratings: row["Ratings"] ? JSON.parse(row["Ratings"] as string) : { votes: 0, value: 0 },
+      images: parseOr(row["Images"] as string | null, []),
+      links: parseOr(row["Links"] as string | null, []),
+      ratings: parseOr(row["Ratings"] as string | null, { votes: 0, value: 0 }),
       monitored: Boolean(row["Monitored"]),
       manualAdd: Boolean(row["ManualAdd"]),
     };
@@ -155,10 +155,9 @@ export class EditionRepository extends BasicRepository<Edition> {
 
   /** Ported from EditionRepository.GetAllMonitoredEditions(): `Query(x => x.Monitored == true)`. */
   getAllMonitoredEditions(): Edition[] {
-    const rows = this.db().prepare('SELECT * FROM "Editions" WHERE "Monitored" = 1').all() as Record<
-      string,
-      unknown
-    >[];
+    const rows = this.db()
+      .prepare('SELECT * FROM "Editions" WHERE "Monitored" = 1')
+      .all() as Record<string, unknown>[];
     return rows.map((r) => this.rowToEdition(r));
   }
 
@@ -173,10 +172,9 @@ export class EditionRepository extends BasicRepository<Edition> {
   /** Ported from EditionRepository.GetEditionsForRefresh(int bookId, List<string> foreignEditionIds). */
   getEditionsForRefresh(bookId: number, foreignEditionIds: string[]): Edition[] {
     if (foreignEditionIds.length === 0) {
-      const rows = this.db().prepare('SELECT * FROM "Editions" WHERE "BookId" = ?').all(bookId) as Record<
-        string,
-        unknown
-      >[];
+      const rows = this.db()
+        .prepare('SELECT * FROM "Editions" WHERE "BookId" = ?')
+        .all(bookId) as Record<string, unknown>[];
       return rows.map((r) => this.rowToEdition(r));
     }
     const placeholders = foreignEditionIds.map(() => "?").join(", ");
@@ -269,7 +267,8 @@ export class EditionRepository extends BasicRepository<Edition> {
       WHERE "Books"."AuthorMetadataId" = ? AND "Editions"."Monitored" = 1 AND "Editions"."Title" = ?
       LIMIT 1
     `;
-    const row = this.db().prepare(sql).get(authorMetadataId, title) as Record<string, unknown> | undefined;
+    const row = this.db().prepare(sql).get(authorMetadataId, title) as
+      Record<string, unknown> | undefined;
     return row ? this.rowToEdition(row) : undefined;
   }
 

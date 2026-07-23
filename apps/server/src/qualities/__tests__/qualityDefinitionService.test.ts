@@ -89,7 +89,10 @@ describe("QualityDefinitionService.handleApplicationStarted (Handle(ApplicationS
 
   it("init should remove old definitions no longer in the default set", () => {
     const repo = makeFakeRepo([
-      newQualityDefinition({ id: 100, name: "Test" }, { weight: 1, minSize: 0, maxSize: 100, id: 20 }),
+      newQualityDefinition(
+        { id: 100, name: "Test" },
+        { weight: 1, minSize: 0, maxSize: 100, id: 20 }
+      ),
     ]);
     const service = new QualityDefinitionService(repo);
 
@@ -115,7 +118,11 @@ describe("QualityDefinitionService reads", () => {
 
   it("all() returns definitions ordered by (recomputed) Weight, ascending", () => {
     const all = service.all();
-    expect(all.map((d) => d.quality.id)).toEqual([Quality.MOBI.id, Quality.EPUB.id, Quality.FLAC.id]);
+    expect(all.map((d) => d.quality.id)).toEqual([
+      Quality.MOBI.id,
+      Quality.EPUB.id,
+      Quality.FLAC.id,
+    ]);
     expect(all.map((d) => d.weight)).toEqual([10, 11, 110]);
   });
 
@@ -176,7 +183,12 @@ describe("QualityDefinitionService reads", () => {
 describe("QualityDefinitionService.execute (Execute(ResetQualityDefinitionsCommand))", () => {
   it("resets MinSize/MaxSize for every default-set definition, keeps Title when resetTitles is false", () => {
     const repo = makeFakeRepo([
-      newQualityDefinition(Quality.MOBI, { minSize: 999, maxSize: 999, title: "Custom Title", id: 1 }),
+      newQualityDefinition(Quality.MOBI, {
+        minSize: 999,
+        maxSize: 999,
+        title: "Custom Title",
+        id: 1,
+      }),
     ]);
     // Seed the rest of the default set too, since execute() throws if any default quality has no row.
     for (const definition of Quality.DefaultQualityDefinitions) {
@@ -196,7 +208,12 @@ describe("QualityDefinitionService.execute (Execute(ResetQualityDefinitionsComma
 
   it("resets Title too when resetTitles is true", () => {
     const repo = makeFakeRepo([
-      newQualityDefinition(Quality.MOBI, { minSize: 999, maxSize: 999, title: "Custom Title", id: 1 }),
+      newQualityDefinition(Quality.MOBI, {
+        minSize: 999,
+        maxSize: 999,
+        title: "Custom Title",
+        id: 1,
+      }),
     ]);
     for (const definition of Quality.DefaultQualityDefinitions) {
       if (definition.quality.id !== Quality.MOBI.id) {

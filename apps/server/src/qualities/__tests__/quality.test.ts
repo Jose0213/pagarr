@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { Quality, qualitiesEqual, qualitiesNotEqual, qualityFromId, qualityToString } from "../quality.js";
+import {
+  Quality,
+  qualitiesEqual,
+  qualitiesNotEqual,
+  qualityFromId,
+  qualityToString,
+} from "../quality.js";
 
 // Translated from NzbDrone.Core.Test/Qualities/QualityFixture.cs
 
@@ -68,13 +74,17 @@ describe("Quality.All / DefaultQualityDefinitions", () => {
   it("DefaultQualityDefinitions has one entry per known quality", () => {
     expect(Quality.DefaultQualityDefinitions).toHaveLength(Quality.All.length);
 
-    const seedIds = Quality.DefaultQualityDefinitions.map((d) => d.quality.id).sort((a, b) => a - b);
+    const seedIds = Quality.DefaultQualityDefinitions.map((d) => d.quality.id).sort(
+      (a, b) => a - b
+    );
     const allIds = Quality.All.map((q) => q.id).sort((a, b) => a - b);
     expect(seedIds).toEqual(allIds);
   });
 
   it("FLAC has no MaxSize (unlimited), matching the C# seed data", () => {
-    const flacDefinition = Quality.DefaultQualityDefinitions.find((d) => d.quality.id === Quality.FLAC.id);
+    const flacDefinition = Quality.DefaultQualityDefinitions.find(
+      (d) => d.quality.id === Quality.FLAC.id
+    );
     expect(flacDefinition?.maxSize).toBeNull();
   });
 

@@ -124,6 +124,27 @@ export interface IConfigService {
   trustCgnatIpAddresses: boolean;
 }
 
+/**
+ * Every real ConfigService/ConfigFileProvider property is a scalar
+ * (string/number/boolean), matching C#'s flat key-value config store -- but
+ * saveConfigDictionary/getConfigDictionary's public signature takes
+ * `Record<string, unknown>` (mirroring C#'s `Dictionary<string, object>`),
+ * so the type system can't rule out a non-primitive value reaching here.
+ * `String(x)` on a plain object silently produces "[object Object]"; this
+ * stringifies primitives directly and falls back to JSON for anything else
+ * so a future non-scalar config value fails loudly/comparably instead of
+ * silently collapsing to a useless string.
+ */
+function stringifyConfigValue(value: unknown): string {
+  if (value === null || value === undefined) {
+    return String(value);
+  }
+  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+    return String(value);
+  }
+  return JSON.stringify(value);
+}
+
 function toBool(value: string): boolean {
   const normalized = value.trim().toLowerCase();
   return normalized === "true" || normalized === "1";
@@ -139,7 +160,9 @@ function parseEnum<T extends string>(allowed: readonly T[], value: string, key: 
   const match = allowed.find((candidate) => candidate.toLowerCase() === normalized);
   if (match === undefined) {
     const allowedList = allowed.join(", ");
-    throw new Error("Invalid value '" + value + "' for enum key '" + key + "'. Expected one of: " + allowedList);
+    throw new Error(
+      "Invalid value '" + value + "' for enum key '" + key + "'. Expected one of: " + allowedList
+    );
   }
   return match;
 }
@@ -157,7 +180,7 @@ export class ConfigService implements IConfigService {
 
   constructor(
     private readonly repository: ConfigRepository,
-    private readonly onConfigSaved?: () => void,
+    private readonly onConfigSaved?: () => void
   ) {}
 
   private allWithDefaults(): Record<string, unknown> {
@@ -231,13 +254,18 @@ export class ConfigService implements IConfigService {
 
     for (const [key, value] of Object.entries(configValues)) {
       const currentValue = allWithDefaults[key];
-      if (currentValue === undefined || currentValue === null || value === undefined || value === null) {
+      if (
+        currentValue === undefined ||
+        currentValue === null ||
+        value === undefined ||
+        value === null
+      ) {
         continue;
       }
 
-      const equal = String(value) === String(currentValue);
+      const equal = stringifyConfigValue(value) === stringifyConfigValue(currentValue);
       if (!equal) {
-        this.setValue(key, String(value));
+        this.setValue(key, stringifyConfigValue(value));
       }
     }
 
@@ -282,7 +310,8 @@ export class ConfigService implements IConfigService {
 
   private setValue(key: string, value: string | number | boolean): void {
     const lowerKey = key.toLowerCase();
-    const stringValue = typeof value === "boolean" || typeof value === "number" ? String(value) : value;
+    const stringValue =
+      typeof value === "boolean" || typeof value === "number" ? String(value) : value;
 
     this.repository.upsert(lowerKey, stringValue);
     this.clearCache();
@@ -356,7 +385,11 @@ export class ConfigService implements IConfigService {
   }
 
   get downloadPropersAndRepacks(): ProperDownloadTypes {
-    return this.getValueEnum(PROPER_DOWNLOAD_TYPES_VALUES, "DownloadPropersAndRepacks", "PreferAndUpgrade");
+    return this.getValueEnum(
+      PROPER_DOWNLOAD_TYPES_VALUES,
+      "DownloadPropersAndRepacks",
+      "PreferAndUpgrade"
+    );
   }
   set downloadPropersAndRepacks(value: ProperDownloadTypes) {
     this.setValue("DownloadPropersAndRepacks", value.toLowerCase());
@@ -675,7 +708,11 @@ export class ConfigService implements IConfigService {
   }
 
   get certificateValidation(): CertificateValidationType {
-    return this.getValueEnum(CERTIFICATE_VALIDATION_TYPE_VALUES, "CertificateValidation", "Enabled");
+    return this.getValueEnum(
+      CERTIFICATE_VALIDATION_TYPE_VALUES,
+      "CertificateValidation",
+      "Enabled"
+    );
   }
 
   get applicationUrl(): string {

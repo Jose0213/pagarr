@@ -88,7 +88,7 @@ function parseOr<T>(value: string | null | undefined, fallback: T): T {
     return fallback;
   }
   if (typeof value !== "string") {
-    return value as unknown as T;
+    return value;
   }
   return JSON.parse(value) as T;
 }
@@ -148,7 +148,7 @@ export class BookRepository extends BasicRepository<Book> {
     return deserialize(super.upsert(serialize(model)));
   }
 
-  override setFields(model: Book, properties: (Exclude<keyof Book, "id"> & string)[]): void {
+  override setFields(model: Book, properties: Exclude<keyof Book, "id">[]): void {
     super.setFields(serialize(model), properties);
   }
 
@@ -160,18 +160,19 @@ export class BookRepository extends BasicRepository<Book> {
       titleSlug: row["TitleSlug"] as string,
       title: row["Title"] as string,
       releaseDate: row["ReleaseDate"] as string | null,
-      links: row["Links"] ? JSON.parse(row["Links"] as string) : [],
-      genres: row["Genres"] ? JSON.parse(row["Genres"] as string) : [],
-      ratings: row["Ratings"] ? JSON.parse(row["Ratings"] as string) : { votes: 0, value: 0 },
+      links: parseOr(row["Links"] as string | null, []),
+      genres: parseOr<string[]>(row["Genres"] as string | null, []),
+      ratings: parseOr(row["Ratings"] as string | null, { votes: 0, value: 0 }),
       cleanTitle: row["CleanTitle"] as string,
       monitored: Boolean(row["Monitored"]),
       anyEditionOk: Boolean(row["AnyEditionOk"]),
       lastInfoSync: row["LastInfoSync"] as string | null,
       added: row["Added"] as string | null,
-      addOptions: row["AddOptions"]
-        ? JSON.parse(row["AddOptions"] as string)
-        : { addType: BookAddType.Automatic, searchForNewBook: false },
-      relatedBooks: row["RelatedBooks"] ? JSON.parse(row["RelatedBooks"] as string) : [],
+      addOptions: parseOr(row["AddOptions"] as string | null, {
+        addType: BookAddType.Automatic,
+        searchForNewBook: false,
+      }),
+      relatedBooks: parseOr<number[]>(row["RelatedBooks"] as string | null, []),
       lastSearchTime: (row["LastSearchTime"] as string | null) ?? null,
     };
   }
@@ -280,17 +281,16 @@ export class BookRepository extends BasicRepository<Book> {
 
   /** Ported from BookRepository.FindById(string foreignBookId): `Query(s => s.ForeignBookId == foreignBookId).SingleOrDefault()`. */
   findById(foreignBookId: string): Book | undefined {
-    const row = this.db().prepare('SELECT * FROM "Books" WHERE "ForeignBookId" = ?').get(foreignBookId) as
-      | Record<string, unknown>
-      | undefined;
+    const row = this.db()
+      .prepare('SELECT * FROM "Books" WHERE "ForeignBookId" = ?')
+      .get(foreignBookId) as Record<string, unknown> | undefined;
     return row ? this.rowToBook(row) : undefined;
   }
 
   /** Ported from BookRepository.FindBySlug(string titleSlug): `Query(s => s.TitleSlug == titleSlug).SingleOrDefault()`. */
   findBySlug(titleSlug: string): Book | undefined {
     const row = this.db().prepare('SELECT * FROM "Books" WHERE "TitleSlug" = ?').get(titleSlug) as
-      | Record<string, unknown>
-      | undefined;
+      Record<string, unknown> | undefined;
     return row ? this.rowToBook(row) : undefined;
   }
 
@@ -334,7 +334,9 @@ export class BookRepository extends BasicRepository<Book> {
       WHERE "BookFiles"."Id" IS NULL AND "Editions"."Monitored" = 1 AND "Books"."ReleaseDate" <= ?
     `;
 
-    const sortColumn = pagingSpec.sortKey ? `"Books"."${columnForSortKey(pagingSpec.sortKey)}"` : `"Books"."Id"`;
+    const sortColumn = pagingSpec.sortKey
+      ? `"Books"."${columnForSortKey(pagingSpec.sortKey)}"`
+      : `"Books"."Id"`;
     const direction = pagingSpec.sortDirection === SortDirection.Descending ? "DESC" : "ASC";
     const pageOffset = Math.max(pagingSpec.page - 1, 0) * pagingSpec.pageSize;
 
@@ -376,7 +378,12 @@ export class BookRepository extends BasicRepository<Book> {
   }
 
   /** Ported from BookRepository.AuthorBooksBetweenDates(Author author, DateTime startDate, DateTime endDate, bool includeUnmonitored). */
-  authorBooksBetweenDates(author: Author, startDate: string, endDate: string, includeUnmonitored: boolean): Book[] {
+  authorBooksBetweenDates(
+    author: Author,
+    startDate: string,
+    endDate: string,
+    includeUnmonitored: boolean
+  ): Book[] {
     let sql = 'SELECT "Books".* FROM "Books"';
     const params: SQLInputValue[] = [];
 
@@ -384,7 +391,8 @@ export class BookRepository extends BasicRepository<Book> {
       sql += ' JOIN "Authors" ON "Books"."AuthorMetadataId" = "Authors"."AuthorMetadataId"';
     }
 
-    sql += ' WHERE "Books"."ReleaseDate" >= ? AND "Books"."ReleaseDate" <= ? AND "Books"."AuthorMetadataId" = ?';
+    sql +=
+      ' WHERE "Books"."ReleaseDate" >= ? AND "Books"."ReleaseDate" <= ? AND "Books"."AuthorMetadataId" = ?';
     params.push(startDate, endDate, author.authorMetadataId);
 
     if (!includeUnmonitored) {

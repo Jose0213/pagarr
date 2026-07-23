@@ -11,7 +11,7 @@ function metadata(overrides: Partial<AuthorMetadata> = {}): AuthorMetadata {
     titleSlug: "author-one",
     name: "Author One",
     ...overrides,
-  } as AuthorMetadata;
+  };
 }
 
 describe("AuthorMetadataRepository", () => {
@@ -82,7 +82,10 @@ describe("AuthorMetadataRepository", () => {
   describe("upsertMany", () => {
     it("inserts brand-new records and returns true", () => {
       setup();
-      const changed = repo.upsertMany([metadata({ foreignAuthorId: "fa-1" }), metadata({ foreignAuthorId: "fa-2", titleSlug: "author-two" })]);
+      const changed = repo.upsertMany([
+        metadata({ foreignAuthorId: "fa-1" }),
+        metadata({ foreignAuthorId: "fa-2", titleSlug: "author-two" }),
+      ]);
 
       expect(changed).toBe(true);
       expect(repo.count()).toBe(2);

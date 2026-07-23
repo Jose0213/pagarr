@@ -37,7 +37,9 @@ describe("CachedHttpResponseService", () => {
     const httpClient: IHttpClient = {
       execute: vi.fn(),
       downloadFile: vi.fn(),
-      get: vi.fn(async (request) => new HttpResponse(request, new HttpHeader(), "fresh content", 200)),
+      get: vi.fn(
+        async (request) => new HttpResponse(request, new HttpHeader(), "fresh content", 200)
+      ),
       getTyped: vi.fn(),
       head: vi.fn(),
       post: vi.fn(),
@@ -103,7 +105,9 @@ describe("CachedHttpResponseService", () => {
     const httpClient: IHttpClient = {
       execute: vi.fn(),
       downloadFile: vi.fn(),
-      get: vi.fn(async (request) => new HttpResponse(request, new HttpHeader(), "refreshed content", 200)),
+      get: vi.fn(
+        async (request) => new HttpResponse(request, new HttpHeader(), "refreshed content", 200)
+      ),
       getTyped: vi.fn(),
       head: vi.fn(),
       post: vi.fn(),
@@ -111,7 +115,11 @@ describe("CachedHttpResponseService", () => {
     };
 
     const service = new CachedHttpResponseService(repo, httpClient, noopLogger);
-    const response = await service.get(new HttpRequest("https://api.example.com/books"), true, 60_000);
+    const response = await service.get(
+      new HttpRequest("https://api.example.com/books"),
+      true,
+      60_000
+    );
 
     expect(response.content).toBe("refreshed content");
     expect(httpClient.get).toHaveBeenCalledTimes(1);
@@ -133,7 +141,9 @@ describe("CachedHttpResponseService", () => {
     const httpClient: IHttpClient = {
       execute: vi.fn(),
       downloadFile: vi.fn(),
-      get: vi.fn(async (request) => new HttpResponse(request, new HttpHeader(), "forced fresh", 200)),
+      get: vi.fn(
+        async (request) => new HttpResponse(request, new HttpHeader(), "forced fresh", 200)
+      ),
       getTyped: vi.fn(),
       head: vi.fn(),
       post: vi.fn(),
@@ -141,7 +151,11 @@ describe("CachedHttpResponseService", () => {
     };
 
     const service = new CachedHttpResponseService(repo, httpClient, noopLogger);
-    const response = await service.get(new HttpRequest("https://api.example.com/books"), false, 60_000);
+    const response = await service.get(
+      new HttpRequest("https://api.example.com/books"),
+      false,
+      60_000
+    );
 
     expect(response.content).toBe("forced fresh");
     expect(httpClient.get).toHaveBeenCalledTimes(1);
@@ -160,7 +174,11 @@ describe("CachedHttpResponseService", () => {
     };
 
     const service = new CachedHttpResponseService(repo, httpClient, noopLogger);
-    const response = await service.get(new HttpRequest("https://api.example.com/books"), true, 60_000);
+    const response = await service.get(
+      new HttpRequest("https://api.example.com/books"),
+      true,
+      60_000
+    );
 
     expect(response.statusCode).toBe(500);
     expect(repo.entries).toHaveLength(0);
@@ -172,7 +190,8 @@ describe("CachedHttpResponseService", () => {
       execute: vi.fn(),
       downloadFile: vi.fn(),
       get: vi.fn(
-        async (request) => new HttpResponse(request, new HttpHeader(), JSON.stringify({ id: 42 }), 200)
+        async (request) =>
+          new HttpResponse(request, new HttpHeader(), JSON.stringify({ id: 42 }), 200)
       ),
       getTyped: vi.fn(),
       head: vi.fn(),

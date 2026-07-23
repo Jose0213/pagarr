@@ -50,7 +50,9 @@ describe("ReleaseProfileRepository", () => {
   it("defaults Required/Ignored to empty arrays when the DB column is NULL", () => {
     const sqlite = db.openConnection();
     sqlite
-      .prepare('INSERT INTO "ReleaseProfiles" ("Required", "Ignored", "Tags", "Enabled", "IndexerId") VALUES (NULL, NULL, ?, 1, 0)')
+      .prepare(
+        'INSERT INTO "ReleaseProfiles" ("Required", "Ignored", "Tags", "Enabled", "IndexerId") VALUES (NULL, NULL, ?, 1, 0)'
+      )
       .run("[]");
 
     const stored = repo.all()[0]!;

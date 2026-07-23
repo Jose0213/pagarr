@@ -51,8 +51,7 @@ export class ReleaseProfileRepository {
 
   find(id: number): ReleaseProfile | undefined {
     const row = this.conn().prepare('SELECT * FROM "ReleaseProfiles" WHERE "Id" = ?').get(id) as
-      | Row
-      | undefined;
+      Row | undefined;
     return row ? this.rowToModel(row) : undefined;
   }
 
