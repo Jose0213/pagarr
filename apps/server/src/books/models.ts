@@ -152,16 +152,28 @@ export interface AuthorMetadata extends ModelBase {
 }
 
 /**
- * Ported from Books/MediaCover/MediaCover.cs's `MediaCover` class as used by
+ * Ported from MediaCover/MediaCover.cs's `MediaCover` class as used by
  * AuthorMetadata.Images / Edition.Images (that module isn't in the Books
  * source directory -- MediaCover is a separate top-level NzbDrone.Core
- * module not yet ported -- so only the narrow shape actually stored in
- * these JSON columns is declared here).
+ * module, ported at `media-cover/mediaCover.ts` -- so only the narrow
+ * shape actually stored in these JSON columns is declared here).
+ *
+ * `extension` mirrors the real `MediaCover.Extension` field (ADDED here by
+ * the `media-cover` worktree -- was missing from this interface before
+ * MediaCover was ported): it's set once from the *original* remote URL's
+ * path extension the first time a `MediaCover.Url` is assigned, and stays
+ * fixed after that even if `.Url` is later rewritten to a local path (see
+ * `media-cover/mediaCover.ts`'s doc comment on the real `MediaCover`
+ * class's sticky Url-setter behavior, which this plain-data mirror can't
+ * reproduce structurally -- callers that construct/rewrite a
+ * `MediaCoverImage` are responsible for setting `extension` once, the same
+ * way the real class's setter would).
  */
 export interface MediaCoverImage {
   coverType: string;
   url: string;
   remoteUrl?: string;
+  extension?: string;
 }
 
 export function newAuthorMetadata(): Omit<AuthorMetadata, keyof ModelBase> & { id: number } {
