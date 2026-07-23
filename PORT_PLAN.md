@@ -95,13 +95,63 @@ reviewed and merged first, since Phase 2 depends on Phase 1's domain model.
   https://docs.hardcover.app/api/getting-started/
 
 ### Phase 3 -- Download + import (parallel worktrees, depend on Phase 2)
-- `Download` (223 files, largest module) -- download client abstraction
-  (qBittorrent/SABnzbd), download tracking, completed-download handling
-- `MediaFiles` (120 files) -- file import, renaming (`Organizer/`, 13 files,
-  is the naming-template engine -- port this one precisely, it's directly
-  reusable)
-- `Extras` (30 files)
-- `RemotePathMappings` (3 files)
+
+Given the size of `Download` (223 files) and `MediaFiles` (120 files), each
+splits into sub-scoped worktrees rather than one worktree per top-level
+module -- otherwise a single agent would be porting 3-5x the file count of
+everyone else's Phase 3 work. Worktrees to stage once Phase 2 lands on
+`main` (Download decisions need `DecisionEngine`; import needs `Parser`):
+
+- `download-clients` -- `Download/Clients/{QBittorrent,Sabnzbd,Blackhole}/`
+  (~38 files) + shared base (`DownloadClientBase.cs`, `TorrentClientBase.cs`,
+  `UsenetClientBase.cs`, `IDownloadClient.cs`, `DownloadClientItem.cs`,
+  `DownloadClientStatus*`, `DownloadClientRepository.cs`,
+  `DownloadClientFactory.cs`, `DownloadClientDefinition.cs`,
+  `DownloadClientProvider.cs`, `DownloadClientType.cs`, exceptions).
+  **Explicitly out of scope** (same reasoning as Indexers' legacy scrapers):
+  `Aria2/`, `Deluge/`, `DownloadStation/`, `Flood/`, `Hadouken/`,
+  `NzbVortex/`, `Nzbget/`, `Pneumatic/`, `Transmission/`, `Vuze/`,
+  `rTorrent/`, `uTorrent/` -- qBittorrent + SABnzbd are the two clients
+  actually run (confirmed live on Nova); Blackhole (watch-folder based, no
+  API) is cheap to port and is the natural fallback/manual-import path.
+  Skipping ~11 other client integrations no one runs, matching this
+  project's original clean-room task #9 scope.
+- `download-tracking` -- `Download/{History,Pending,TrackedDownloads,
+  Aggregation}/` + orchestration (`CompletedDownloadService.cs`,
+  `DownloadService.cs`, `DownloadProcessingService.cs`,
+  `FailedDownloadService.cs`, `IgnoredDownloadService.cs`,
+  `NzbValidationService.cs`, `ProcessDownloadDecisions.cs`,
+  `ProcessedDecisionResult.cs`, `ProcessedDecisions.cs`,
+  `ProvideImportItemService.cs`, `RedownloadFailedDownloadService.cs`,
+  events/commands) -- the queue/history/pending-release layer sitting on
+  top of `download-clients`.
+- `media-files-import` -- `MediaFiles/BookImport/` (38 files) +
+  `DownloadedBooksImportService.cs`/`DownloadedBooksCommandService.cs` +
+  `MediaFileService.cs`/`MediaFileRepository.cs`/`BookFile.cs` -- the actual
+  import pipeline (this is the subsystem behind several known-issues
+  findings on ambiguous/multi-format imports -- port carefully, then patch,
+  same discipline as Parser).
+- `media-files-tags` -- `MediaFiles/{EpubTag,AzwTag,TorrentInfo}/` (32
+  files) + `AudioTagService.cs`/`EbookTagService.cs`/`MetadataTagService.cs`/
+  `MediaInfoFormatter.cs` -- format-specific tag reading, needed by import
+  to extract embedded book metadata.
+- `media-files-organize` -- `Organizer/` (13 files -- NOT nested under
+  MediaFiles despite the similar name; it's its own top-level
+  `NzbDrone.Core/Organizer/` module) + `RenameBookFileService.cs`/
+  `RenameBookFilePreview.cs`/`RetagBookFilePreview.cs`/
+  `BookFileMovingService.cs`/`BookFileMoveResult.cs`/
+  `UpgradeMediaFileService.cs`/`UpdateBookFileService.cs`/
+  `MediaFileTableCleanupService.cs`/`RecycleBinProvider.cs`/
+  `RootFolderWatchingService.cs`/`DiskScanService.cs` -- the naming-template
+  engine and everything that acts on a filename once import has matched a
+  file; port `Organizer/` precisely, it's directly reusable and load-bearing
+  for known-issue #5 (filesystem permission friction).
+- `extras` -- `Extras/` (30 files) -- cover art, metadata sidecar files,
+  etc. accompanying an imported book.
+- `remote-path-mappings` -- `RemotePathMappings/` (3 files) -- small, folded
+  into whichever adjacent worktree has spare review bandwidth if 7 parallel
+  agents is too many at once; otherwise its own worktree like every other
+  module.
 
 ### Phase 4 -- Ops/UX layer (parallel worktrees, depend on Phase 0-3)
 - `Notifications` (176 files, second-largest -- mostly N similar notifier
