@@ -24,7 +24,7 @@
     "vitest": "^3.2.7"
   },
   "dependencies": {
-    "adm-zip": "0.5.16",
+    "adm-zip": "0.6.0",
     "bencode": "4.0.1",
     "fast-xml-parser": "5.10.1",
     "node-taglib-sharp": "6.0.3"
