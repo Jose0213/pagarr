@@ -54,17 +54,45 @@ Everything else depends on this existing first.
 - `RootFolders` (4 files)
 
 ### Phase 2 -- Acquisition pipeline (parallel worktrees, depend on Phase 1)
-- `Indexers` (76 files) -- Prowlarr/Torznab client, indexer definitions
-- `IndexerSearch` (10 files)
+
+Worktrees staged 2026-07-22 at `~/pagarr-worktrees/{indexers,indexer-search,
+parser,decision-engine,custom-formats,metadata-source}`, branches
+`port/<module>` off `main` @ 8833b2c. Not yet dispatched to agents -- waiting
+on Phase 1 (Books/Qualities/Profiles/Languages/Tags/RootFolders) to be
+reviewed and merged first, since Phase 2 depends on Phase 1's domain model.
+
+- `Indexers` (76 files, real `NzbDrone.Core/Indexers/` tree) -- port the
+  generic protocol clients only: `Torznab/` (5 files) and `Newznab/` (8
+  files), plus the shared base (`IndexerBase.cs`, `HttpIndexerBase.cs`,
+  `IndexerDefinition.cs`, `IndexerFactory.cs`, `IndexerRepository.cs`,
+  `IndexerStatus*`, `RssSyncService.cs`, request/response plumbing).
+  **Explicitly out of scope:** the legacy per-site scrapers (`Gazelle/`,
+  `IPTorrents/`, `Nyaa/`, `FileList/`, `Torrentleech/`, `TorrentRss/` -- ~26
+  files total). Prowlarr already aggregates these trackers over Torznab;
+  direct per-site scraping contradicts the locked non-goal in
+  `docs/known-issues-fixlist.md` #6 ("always through Prowlarr, never direct
+  indexer scraping" -- this is exactly what sank Readarr #848/Libgen). Only
+  Torznab matters in practice since Prowlarr is the aggregator Pagarr talks
+  to (confirmed live on Nova); Newznab is ported too since it's equally
+  generic and cheap, for Usenet-only Prowlarr setups.
+- `IndexerSearch` (10 files) -- author/book search commands + services that
+  drive indexer queries.
 - `Parser` (20 files) -- release title parsing (this is the exact subsystem
-  behind several known-issues findings -- port carefully, then patch)
+  behind several known-issues findings -- port carefully, then patch).
 - `DecisionEngine` (41 files) -- release acceptance/rejection logic
-- `CustomFormats` (15 files)
-- `MetadataSource` (42 files) -- Goodreads/metadata provider client (NOTE:
-  Readarr's actual MetadataSource depended on its own centralized metadata
-  server that's the root cause of known-issue #1 -- port the interface/shape,
-  but the provider implementations get replaced with Hardcover/OpenLibrary/
-  Google Books per the original clean-room research, not ported as-is)
+  (`Specifications/` is the bulk of it -- each spec is a small, independently
+  portable rejection rule).
+- `CustomFormats` (15 files).
+- `MetadataSource` (42 files) -- Readarr's real tree is `BookInfo/`,
+  `Goodreads/`, `GoodreadsSearchProxy/` behind `IProvideAuthorInfo`/
+  `IProvideBookInfo`/`IProvideSeriesInfo`/`ISearchForNew*` interfaces. Port
+  the **interfaces/shape only** -- the provider implementations get replaced
+  with Hardcover/OpenLibrary/Google Books per the original clean-room
+  research (known-issues-fixlist.md #1: Readarr's single centralized
+  metadata server, bookinfo.club, was the root cause of "authors not found"
+  failures). Do not port Goodreads/BookInfo client code as-is; it's the thing
+  being fixed, not faithfully preserved. Hardcover API reference:
+  https://docs.hardcover.app/api/getting-started/
 
 ### Phase 3 -- Download + import (parallel worktrees, depend on Phase 2)
 - `Download` (223 files, largest module) -- download client abstraction

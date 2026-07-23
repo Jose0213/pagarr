@@ -1,22 +1,11 @@
-import type { IDatabase } from "../database.js";
-import { BasicRepository, type ColumnMapping } from "../basic-repository.js";
-import type { ModelBase } from "../model-base.js";
-
 /**
- * Example concrete repository proving BasicRepository<TModel> against a
- * real ported table (Tags, from Migration/001_initial_setup.cs). Mirrors
- * how a real Readarr `TagRepository : BasicRepository<Tag>` subclass would
- * be declared once TableMapping reflection is replaced with an explicit
- * column list (see basic-repository.ts's module doc comment).
+ * Back-compat re-export. The real Tags module port lives at
+ * apps/server/src/tags/ (Tag, TagDetails, TagRepository, TagService,
+ * TagsUpdatedEvent -- see tags/index.ts). This file originally held a
+ * minimal `TagRepository` written during Phase 0 purely as an example of
+ * the `BasicRepository<TModel>` pattern against a real table; that example
+ * has now been superseded by the full port, so this just re-exports the
+ * real thing to avoid a second, drifting definition of `Tag`/`TagRepository`.
  */
-export interface Tag extends ModelBase {
-  label: string;
-}
-
-const TAG_COLUMNS: ColumnMapping<Tag>[] = [{ prop: "label", column: "Label" }];
-
-export class TagRepository extends BasicRepository<Tag> {
-  constructor(database: IDatabase) {
-    super(database, { tableName: "Tags", columns: TAG_COLUMNS });
-  }
-}
+export { TagRepository } from "../../tags/tagRepository.js";
+export type { Tag } from "../../tags/tag.js";
