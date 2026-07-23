@@ -95,13 +95,33 @@ export const NONE_PROFILE_NAME = "None";
 export const NONE_PROFILE_MIN_POPULARITY = 1e10;
 
 /**
- * Ported from MetadataProfileService's `PartOrSetRegex`. JS regex: named
- * groups + alternation port 1:1 from .NET syntax here (no engine-support
- * gaps like PerlRegexFactory's `x`/`n` modifiers hit -- this pattern uses
- * none of those).
+ * Ported from MetadataProfileService's `PartOrSetRegex`. .NET allows the
+ * same named group (`from`/`to`) to repeat across disjoint alternation
+ * branches; JS's `RegExp` did not until a recent V8/engine change (duplicate
+ * named capture groups), which isn't available on the Node version this
+ * project's CI pins to (see PORT_PLAN.md's node:sqlite version-boundary
+ * note for the same class of gotcha) -- `/(?<from>\d+) of (?<to>\d+)|(?<from>\d+).../`
+ * throws `SyntaxError: Duplicate capture group name` there. Ported as three
+ * separate single-alternative regexes instead of one three-way alternation,
+ * tried in the same order the original's alternation would have matched
+ * them, preserving identical match semantics without relying on duplicate
+ * group name support.
  */
-const PART_OR_SET_REGEX =
-  /(?<from>\d+) of (?<to>\d+)|(?<from>\d+)\s?\/\s?(?<to>\d+)|(?<from>\d+)\s?-\s?(?<to>\d+)/i;
+const PART_OR_SET_REGEXES = [
+  /(?<from>\d+) of (?<to>\d+)/i,
+  /(?<from>\d+)\s?\/\s?(?<to>\d+)/i,
+  /(?<from>\d+)\s?-\s?(?<to>\d+)/i,
+];
+
+function matchPartOrSet(title: string): RegExpExecArray | null {
+  for (const regex of PART_OR_SET_REGEXES) {
+    const match = regex.exec(title);
+    if (match) {
+      return match;
+    }
+  }
+  return null;
+}
 
 export class MetadataProfileService {
   private readonly authorService: AuthorLookup;
@@ -410,7 +430,7 @@ export class MetadataProfileService {
       }
     }
 
-    const match = PART_OR_SET_REGEX.exec(book.title);
+    const match = matchPartOrSet(book.title);
 
     if (match?.groups?.["from"]) {
       const from = Number.parseInt(match.groups["from"], 10);
