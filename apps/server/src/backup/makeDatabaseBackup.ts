@@ -1,6 +1,4 @@
-import { DatabaseSync, backup as sqliteBackup } from "node:sqlite";
 import { basename, join } from "node:path";
-import { unlinkSync } from "node:fs";
 import type { IDatabase } from "../db/database.js";
 
 export interface MakeDatabaseBackupLogger {
@@ -20,46 +18,25 @@ const noopLogger: MakeDatabaseBackupLogger = { error: () => {} };
  * 500ms sleep between them, then forces the destination's journal mode
  * back to Truncate (the source may be running in WAL mode, and a
  * mid-backup page-size or journal-mode change would otherwise leak
- * through). `node:sqlite` exports the same native SQLite backup API
- * directly as a standalone async `backup(sourceDb, destinationPath,
- * options?)` function (confirmed against a real Node v24 `node:sqlite`
- * import: returns `Promise<number>`, the total page count copied) --
- * ported here as a direct, faithful equivalent rather than a manual
- * file-copy, since it provides the same "safe to run against a live,
- * open, WAL-mode connection" guarantee the C# original relies on
- * (`BackupDatabase` is called while the app's own live connection to the
- * main DB is still open).
+ * through).
  *
- * `SQLiteJournalModeEnum.Truncate` / the post-backup `PRAGMA
- * journal_mode=truncate` forcing step, and `SQLiteConnection.ClearAllPools()`
- * (ADO.NET connection-pool cleanup -- `node:sqlite` has no connection pool
- * to clear) are ported as a single `PRAGMA journal_mode=TRUNCATE;` executed
- * against the freshly-written backup file after `backup()` resolves, opened
- * as its own short-lived `DatabaseSync` purely to run that one pragma and
- * close again. NOTE: unlike `journal_mode=WAL`, `TRUNCATE`/`DELETE`/
- * `PERSIST` journal modes are NOT persisted in the SQLite file itself --
- * they're a per-connection runtime setting (confirmed against a real
- * `node:sqlite` round-trip: a freshly re-opened connection to the same file
- * reports SQLite's built-in default, "delete", regardless of what a prior
- * connection set). This matches the C# original's own actual observable
- * behavior exactly -- `BackupDatabase()` forces Truncate mode on the same
- * `backupConnection` it just wrote to, then closes it without ever
- * verifying the setting survived a reconnect either; the pragma's real,
- * durable effect here (as in the C# original) is ensuring the backup
- * process's -wal/-shm sidecars get checkpointed and cleaned up before the
- * connection closes, not that some persistent "Truncate mode" flag lives on
- * in the file.
- *
- * `-shm`/`-wal` sidecar files: unlike C#'s ADO.NET backup (which only ever
- * produces the single `.db` file at `backupConnectionStringBuilder.
- * DataSource`), `node:sqlite`'s native backup can leave a `-wal`/`-shm`
- * sidecar next to the destination if the backup was interrupted mid-page or
- * the destination's own journal mode defaults to WAL before the
- * `journal_mode=TRUNCATE` pragma runs. These are deleted (best-effort) after
- * forcing Truncate mode, so the emitted backup is always the single
- * self-contained `.db` file the original's comment ("This should also
- * automatically deal with the -journal and -wal files during restore")
- * describes BackupService.cs's caller as relying on.
+ * `node:sqlite` also exports a standalone `backup(sourceDb, destinationPath,
+ * options?)` function that wraps the same native SQLite backup API -- but it
+ * was only added in Node 22.15.0, one point release after this project's
+ * CI-pinned floor (22.14.0; confirmed the hard way -- an earlier version of
+ * this file used it and passed locally on a newer Node before failing CI's
+ * 22.14.0 leg with `TypeError: (0 , backup) is not a function`). Ported here
+ * instead via SQLite's `VACUUM INTO 'path'` statement, run against the live
+ * connection: a standard SQL feature of the SQLite library itself (not a
+ * `node:sqlite` API surface), so it's available on any Node version this
+ * project supports. It provides an equivalent guarantee to the C# original
+ * -- safe to run against a live, open, WAL-mode connection, since `VACUUM
+ * INTO` reads a transactionally-consistent snapshot -- and, as a bonus,
+ * `VACUUM INTO`'s output is always a single, defragmented, rollback-journal
+ * (not WAL) file with no `-wal`/`-shm` sidecar, which is exactly the
+ * "Truncate mode, sidecars cleaned up" end state `BackupDatabase()` forces
+ * via an explicit post-backup pragma in the C# original -- so no equivalent
+ * pragma step is needed here.
  */
 export interface IMakeDatabaseBackup {
   backupDatabase(database: IDatabase, targetDirectory: string, sourcePath: string): Promise<void>;
@@ -83,30 +60,16 @@ export class MakeDatabaseBackup implements IMakeDatabaseBackup {
   ): Promise<void> {
     const destinationPath = join(targetDirectory, basename(sourcePath));
 
-    await sqliteBackup(database.openConnection(), destinationPath);
-
-    this.forceTruncateJournalMode(destinationPath);
-  }
-
-  private forceTruncateJournalMode(destinationPath: string): void {
     try {
-      // Short-lived connection opened solely to run one pragma.
-      const conn = new DatabaseSync(destinationPath);
-      try {
-        conn.exec("PRAGMA journal_mode=TRUNCATE");
-      } finally {
-        conn.close();
-      }
-
-      for (const suffix of ["-wal", "-shm"]) {
-        try {
-          unlinkSync(destinationPath + suffix);
-        } catch {
-          // Sidecar file didn't exist -- nothing to clean up.
-        }
-      }
+      // SQLite string literals escape a single quote by doubling it; the
+      // destination is a filesystem path we control (derived from
+      // targetDirectory/sourcePath, never user-supplied SQL), but this
+      // guards against paths that legitimately contain an apostrophe.
+      const escapedPath = destinationPath.replace(/'/g, "''");
+      database.openConnection().exec(`VACUUM INTO '${escapedPath}'`);
     } catch (e) {
-      this.logger.error("Failed to force Truncate journal mode on backup file", e);
+      this.logger.error("Failed to create database backup", e);
+      throw e;
     }
   }
 }
