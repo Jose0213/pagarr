@@ -26,6 +26,7 @@ import { parseSabnzbdQueueTime } from "./sabnzbdQueueTimeConverter.js";
 import { parseSabnzbdStringArray } from "./sabnzbdStringArrayConverter.js";
 import type { SabnzbdSettings } from "./SabnzbdSettings.js";
 import { isRecentBook } from "../RemoteBookLike.js";
+import { ReleaseDownloadException } from "../TorrentClientBase.js";
 
 /**
  * Forward-ref for `DownloadClientRejectedReleaseException`
@@ -34,8 +35,17 @@ import { isRecentBook } from "../RemoteBookLike.js";
  * same situation as `ReleaseDownloadException`/`ReleaseUnavailableException`/
  * `ReleaseBlockedException` in TorrentClientBase.ts, whose doc comment this
  * mirrors).
+ *
+ * FIXED at Phase 4 Wave 1 merge review: this used to `extends Error`
+ * directly instead of `extends ReleaseDownloadException` -- the real C#
+ * `DownloadClientRejectedReleaseException : ReleaseDownloadException` (see
+ * NzbDrone.Core/Exceptions/DownloadClientRejectedReleaseException.cs), and
+ * `TorrentClientBase.ts`'s own three exceptions in this same forward-ref
+ * family already got the inheritance right -- this was the one that missed
+ * it, caught by a regression test proving every exception in this family is
+ * `instanceof ReleaseDownloadException`.
  */
-export class DownloadClientRejectedReleaseException extends Error {
+export class DownloadClientRejectedReleaseException extends ReleaseDownloadException {
   constructor(message: string) {
     super(message);
     this.name = "DownloadClientRejectedReleaseException";

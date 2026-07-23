@@ -89,6 +89,17 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 /** Default migrations dir: apps/server/src/db/migrations (main DB schema history). */
 export const DEFAULT_MAIN_MIGRATIONS_DIR = join(__dirname, "migrations");
 
+/**
+ * Default migrations dir: apps/server/src/db/migrations-log (log DB schema
+ * history -- currently just the "Logs" table from 0001_initial_setup.sql and
+ * "UpdateHistory" from 0024_add_update_history.sql). Added alongside the
+ * Instrumentation module port (apps/server/src/instrumentation/), which is
+ * the first caller that actually opens the log database for real use --
+ * createLogDatabase() previously defaulted its migrationsDir to `null`
+ * because nothing needed the Logs table yet.
+ */
+export const DEFAULT_LOG_MIGRATIONS_DIR = join(__dirname, "migrations-log");
+
 export interface CreateDatabaseOptions {
   /** ':memory:' for tests, or a filesystem path for a real db. */
   path: string;
@@ -132,7 +143,10 @@ export function createMainDatabase(
   return new MainDatabase(createDatabase("Main", { path, migrationsDir }));
 }
 
-export function createLogDatabase(path: string, migrationsDir: string | null = null): LogDatabase {
+export function createLogDatabase(
+  path: string,
+  migrationsDir: string | null = DEFAULT_LOG_MIGRATIONS_DIR
+): LogDatabase {
   return new LogDatabase(createDatabase("Log", { path, migrationsDir }));
 }
 

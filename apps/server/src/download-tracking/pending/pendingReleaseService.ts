@@ -272,15 +272,28 @@ export class PendingReleaseService {
           downloadClientName = downloadClient?.name ?? null;
         }
 
+        // Real C#: `Quality = pendingRelease.RemoteBook.ParsedBookInfo.Quality`
+        // -- both links dereferenced unconditionally, no null check (would
+        // NullReferenceException on a null ParsedBookInfo or a null Quality
+        // property, same as every other unconditional-dereference invariant
+        // this port preserves rather than silently defaulting away -- see
+        // e.g. provideImportItemService.ts's explicit-throw precedent).
+        if (remoteBook.parsedBookInfo === null) {
+          throw new Error("remoteBook.parsedBookInfo must not be null");
+        }
+        if (remoteBook.parsedBookInfo.quality === null) {
+          throw new Error("remoteBook.parsedBookInfo.quality must not be null");
+        }
+
         queued.push({
           id: getQueueId(pendingRelease, book),
           author: remoteBook.author,
           book,
-          quality: remoteBook.parsedBookInfo?.quality ?? null,
+          quality: remoteBook.parsedBookInfo.quality,
           size: remoteBook.release!.size,
           title: pendingRelease.title,
           sizeleft: remoteBook.release!.size,
-          timeleftMs,
+          timeleft: timeleftMs,
           estimatedCompletionTime: ect.toISOString(),
           status: PendingReleaseReason[pendingRelease.reason],
           trackedDownloadStatus: null,
@@ -291,7 +304,13 @@ export class PendingReleaseService {
           protocol: parseDownloadProtocolString(remoteBook.release!.downloadProtocol),
           downloadClient: downloadClientName,
           downloadClientHasPostImportCategory: false,
-          indexer: remoteBook.release!.indexer,
+          // Real C# `Indexer = pendingRelease.RemoteBook.Release.Indexer`
+          // dereferences unconditionally too, but unlike quality/
+          // parsedBookInfo above this only feeds a display string (not a
+          // typed field callers branch on), so a "no known indexer name"
+          // string default is a safe, low-stakes gap-fill rather than
+          // warranting the same explicit-throw treatment.
+          indexer: remoteBook.release!.indexer ?? "",
           outputPath: null,
           errorMessage: null,
           downloadForced: false,
@@ -299,20 +318,27 @@ export class PendingReleaseService {
       }
     }
 
-    // Return best quality release for each book.
+    // Return best quality release for each book. `q.book`/`q.author` are
+    // non-null by construction here: `book` above is sourced directly from
+    // `remoteBook.books`' iteration (never null), and `remoteBook.author
+    // === null` was already `continue`d past earlier in this method --
+    // QueueItem's real port-wide type is nullable (`Author | null`/`Book |
+    // null`, matching the real C# `RemoteBook`'s own nullable
+    // `Author`/list-of-`Book`), but every item pushed by *this* method
+    // specifically always has both populated.
     const byBook = new Map<number, QueueItem[]>();
     for (const q of queued) {
-      const list = byBook.get(q.book.id);
+      const list = byBook.get(q.book!.id);
       if (list) {
         list.push(q);
       } else {
-        byBook.set(q.book.id, [q]);
+        byBook.set(q.book!.id, [q]);
       }
     }
 
     const deduped: QueueItem[] = [];
     for (const group of byBook.values()) {
-      const author = group[0]!.author;
+      const author = group[0]!.author!;
       const profile = (author as unknown as { qualityProfile?: QualityProfile }).qualityProfile;
       const comparer = profile ? new QualityModelComparer(asQualityProfileLike(profile)) : null;
 

@@ -98,27 +98,63 @@ export function isOutputPathEmpty(item: DownloadClientItem): boolean {
   return item.outputPath.isEmpty;
 }
 
-// ---- NzbDrone.Core/Exceptions/*.cs (no real equivalent yet) ----
+// ---- NzbDrone.Core/Exceptions/*.cs ----
 
-/** Forward-ref for the slice of NzbDrone.Core/Exceptions/*.cs `DownloadService`/`ProcessDownloadDecisions` catch by type. `Exceptions` (the generic exception-hierarchy module) isn't ported anywhere yet -- no real equivalent to swap to. */
-export class ReleaseUnavailableException extends Error {}
-export class ReleaseBlockedException extends Error {}
-export class DownloadClientRejectedReleaseException extends Error {}
-export class ReleaseDownloadException extends Error {
-  constructor(
-    message: string,
-    readonly innerException?: Error
-  ) {
-    super(message);
-  }
-}
+/**
+ * RECONCILED at Phase 4 Wave 1 merge review: this used to be a third,
+ * independent forward-ref copy of these exceptions (a `apps/server/src/
+ * exceptions/` module now exists with the real, faithful port -- see that
+ * module's own doc comments for its exact shapes). This file does NOT
+ * import from there, though -- and that's deliberate, not an oversight.
+ *
+ * The real C# `NzbDrone.Core.Exceptions.ReleaseDownloadException` etc. are
+ * actually THROWN by `NzbDrone.Core.Download.TorrentClientBase`/
+ * `UsenetClientBase`/`Sabnzbd` -- and in this port, `download-clients/
+ * TorrentClientBase.ts` and `download-clients/sabnzbd/Sabnzbd.ts` each
+ * independently declared their OWN local copies of these same exceptions
+ * (same situation this file was in), since `download-clients` was also
+ * ported in a worktree parallel to `Exceptions`. Those local copies are
+ * what this port's download clients actually construct and throw at
+ * runtime today.
+ *
+ * `instanceof` checks only match the exact class (or a subclass of it) an
+ * object was constructed from -- two textually-identical `class X extends
+ * Error {}` declarations in different files are NOT instanceof-compatible
+ * with each other. So importing from `exceptions/` here instead of
+ * `download-clients/` would silently break every catch block below: they'd
+ * compile fine, but `ex instanceof ReleaseUnavailableException` would
+ * always be `false` for an exception actually thrown by
+ * `TorrentClientBase.download()`, since it throws `download-clients`' own
+ * class, not `exceptions`'. Importing from `download-clients/` instead
+ * (the actual, live throw site) is the correct fix -- verified against the
+ * chain above, not assumed.
+ *
+ * Adopting the real `exceptions/` module's classes throughout the download
+ * pipeline (`download-clients` AND this file together) is a real, deferred
+ * follow-up: `exceptions/ReleaseDownloadException`'s constructor requires
+ * a `release: ReleaseInfo` from `parser/model/releaseInfo.js`, but
+ * `download-clients` only has access to `indexers/releaseInfo.js`'s
+ * `ReleaseInfo` (via `RemoteBookLike`) -- two independently-ported,
+ * structurally different `ReleaseInfo` types (different field nullability,
+ * `downloadProtocol: number` vs `string | null`). Unifying those two
+ * `ReleaseInfo` types is a prerequisite for that adoption and is out of
+ * scope for a routine merge-review reconciliation; flagged here for a
+ * dedicated follow-up rather than rushed.
+ */
+export {
+  ReleaseDownloadException,
+  ReleaseUnavailableException,
+  ReleaseBlockedException,
+} from "../download-clients/TorrentClientBase.js";
+export { DownloadClientRejectedReleaseException } from "../download-clients/sabnzbd/Sabnzbd.js";
 
-/** Forward-ref for NzbDrone.Common/Http/TooManyRequestsException.cs's slice `DownloadService.DownloadReport`'s catch block reads (`RetryAfter`). `NzbDrone.Common.Http` isn't ported anywhere yet -- no real equivalent to swap to. */
-export class TooManyRequestsException extends Error {
-  constructor(
-    message: string,
-    readonly retryAfterMs: number
-  ) {
-    super(message);
-  }
-}
+/**
+ * The real `TooManyRequestsException` (Phase 0, `apps/server/src/http/
+ * HttpException.ts`) -- thrown by `HttpClient.ts` on a 429 response. This
+ * file's old forward-ref guessed a `(message, retryAfterMs)` constructor
+ * shape; the real one is `(request, response)` with a `retryAfter: number
+ * | null` property (not `retryAfterMs`, and nullable). Call sites in this
+ * module reading `.retryAfterMs` need to read `.retryAfter` (and
+ * null-check) instead -- see downloadService.ts.
+ */
+export { TooManyRequestsException } from "../http/HttpException.js";

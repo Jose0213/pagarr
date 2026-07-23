@@ -8,6 +8,7 @@ import {
   createLogDatabase,
   createCacheDatabase,
   DEFAULT_MAIN_MIGRATIONS_DIR,
+  DEFAULT_LOG_MIGRATIONS_DIR,
   type MainDatabase,
   type LogDatabase,
   type CacheDatabase,
@@ -98,5 +99,33 @@ describe("db-factory", () => {
     expect(row.Label).toBe("persisted");
     // Migrations should be a no-op the second time (already at version 40).
     expect(second.migration()).toBe(40);
+  });
+
+  it("createLogDatabase() defaults to running the real log-db migrations (Logs table) without an explicit migrationsDir", () => {
+    // Added alongside the Instrumentation module port: createLogDatabase's
+    // migrationsDir default changed from `null` (skip migrations) to
+    // DEFAULT_LOG_MIGRATIONS_DIR, since that module is the first real
+    // caller of the log database. See db-factory.ts's doc comment on
+    // DEFAULT_LOG_MIGRATIONS_DIR.
+    tmpDir = mkdtempSync(join(tmpdir(), "pagarr-datastore-test-"));
+    const logPath = join(tmpDir, "pagarr-log-default.db");
+
+    const logDb = createLogDatabase(logPath);
+    opened = [logDb];
+
+    expect(logDb.migration()).toBeGreaterThan(0);
+
+    logDb
+      .openConnection()
+      .prepare('INSERT INTO "Logs" ("Message", "Time", "Logger", "Level") VALUES (?, ?, ?, ?)')
+      .run("hello", new Date().toISOString(), "TestLogger", "Info");
+
+    const row = logDb.openConnection().prepare('SELECT * FROM "Logs"').get() as { Message: string };
+    expect(row.Message).toBe("hello");
+  });
+
+  it("DEFAULT_LOG_MIGRATIONS_DIR points at the same migrations-log directory the earlier tests hardcode", () => {
+    opened = [];
+    expect(DEFAULT_LOG_MIGRATIONS_DIR).toBe(LOG_MIGRATIONS_DIR);
   });
 });

@@ -243,10 +243,10 @@ export class DownloadService implements IDownloadService {
       }
 
       if (ex instanceof ReleaseDownloadException) {
-        if (ex.innerException instanceof TooManyRequestsException) {
+        if (ex.cause instanceof TooManyRequestsException && ex.cause.retryAfter !== null) {
           this.indexerStatusService.recordFailure(
             remoteBook.release.indexerId,
-            ex.innerException.retryAfterMs
+            ex.cause.retryAfter
           );
         } else {
           this.indexerStatusService.recordFailure(remoteBook.release.indexerId);
