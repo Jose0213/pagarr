@@ -135,8 +135,19 @@ export class AuthorMetadataRepository extends BasicRepository<AuthorMetadata> {
     super.updateMany(models.map(serialize));
   }
 
+  /**
+   * BUGFIX (see bookRepository.ts's identical fix for the full
+   * explanation): `super.upsert(serialize(model))` re-entered THIS class's
+   * own `insert`/`update` overrides via virtual dispatch inside
+   * `BasicRepository.upsert`, each serializing the already-serialized model
+   * a second time. Fixed by branching explicitly and calling
+   * `BasicRepository`'s `insert`/`update` directly on an already-serialized
+   * row.
+   */
   override upsert(model: AuthorMetadata): AuthorMetadata {
-    return deserialize(super.upsert(serialize(model)));
+    const row = serialize(model);
+    const saved = row.id === 0 ? super.insert(row) : super.update(row);
+    return deserialize(saved);
   }
 
   override setFields(

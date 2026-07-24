@@ -189,4 +189,62 @@ describe("EditionRepository", () => {
       expect(editionRepo.get(e2.id).monitored).toBe(true);
     });
   });
+
+  /**
+   * Regression coverage for the upsert() double-serialization bugfix -- see
+   * bookRepository.test.ts's identical describe block for the full
+   * explanation.
+   */
+  describe("upsert", () => {
+    it("insert-branch (id 0): stores JSON-embedded columns single-encoded, not double-encoded", () => {
+      const author = insertAuthor();
+      const book = insertBook(author.authorMetadataId);
+
+      const upserted = editionRepo.upsert({
+        ...newEdition(),
+        bookId: book.id,
+        foreignEditionId: "fe-upsert-insert",
+        titleSlug: "fe-upsert-insert-slug",
+        title: "Upserted Edition",
+        images: [{ coverType: "cover", url: "/covers/1.jpg" }],
+      });
+
+      expect(upserted.id).toBeGreaterThan(0);
+      expect(upserted.images).toEqual([{ coverType: "cover", url: "/covers/1.jpg" }]);
+
+      const conn = db.openConnection();
+      const row = conn
+        .prepare('SELECT "Images" FROM "Editions" WHERE "Id" = ?')
+        .get(upserted.id) as { Images: string };
+      expect(JSON.parse(row.Images)).toEqual([{ coverType: "cover", url: "/covers/1.jpg" }]);
+
+      const fetched = editionRepo.get(upserted.id);
+      expect(fetched.images).toEqual([{ coverType: "cover", url: "/covers/1.jpg" }]);
+    });
+
+    it("update-branch (id != 0): stores JSON-embedded columns single-encoded, not double-encoded", () => {
+      const author = insertAuthor();
+      const book = insertBook(author.authorMetadataId);
+      const existing = insertEdition(book.id, {
+        images: [{ coverType: "cover", url: "/covers/old.jpg" }],
+      });
+
+      const upserted = editionRepo.upsert({
+        ...existing,
+        images: [{ coverType: "cover", url: "/covers/new.jpg" }],
+      });
+
+      expect(upserted.id).toBe(existing.id);
+      expect(upserted.images).toEqual([{ coverType: "cover", url: "/covers/new.jpg" }]);
+
+      const conn = db.openConnection();
+      const row = conn
+        .prepare('SELECT "Images" FROM "Editions" WHERE "Id" = ?')
+        .get(existing.id) as { Images: string };
+      expect(JSON.parse(row.Images)).toEqual([{ coverType: "cover", url: "/covers/new.jpg" }]);
+
+      const fetched = editionRepo.get(existing.id);
+      expect(fetched.images).toEqual([{ coverType: "cover", url: "/covers/new.jpg" }]);
+    });
+  });
 });

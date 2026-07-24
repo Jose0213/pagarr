@@ -219,9 +219,40 @@ Wave 2):
   real source) -- telemetry to Readarr's own servers, which no longer
   exist.
 
+### Phase 4.5 -- ImportLists (scope gap found while planning Phase 5)
+
+- `NzbDrone.Core/ImportLists` (46 files: base provider framework + `Exceptions/`,
+  `Exclusions/`, `Goodreads/`, `LazyLibrarian/`, `Readarr/` sub-integrations)
+  -- discovered missing from every Phase 1-4 wave (not on the original
+  explicitly-skipped list alongside Update/Analytics; a genuine planning
+  gap, not a deliberate exclusion). Surfaced because `Readarr.Api.V1/
+  ImportLists/` (5 files) needs a real core module to sit on top of.
+  `Goodreads/` here needs the same dead-API scrutiny already applied twice
+  (MetadataSource's client, Notifications' webhook) -- same Dec-2020
+  API-key cutoff likely applies a third time. Ported as its own module,
+  independent of and in parallel with Phase 5's API sweep (API resources
+  for every other already-ported module don't depend on this landing
+  first; the ImportLists API resource itself is deferred to whichever
+  Phase 5 wave follows this module's merge).
+
 ### Phase 5 -- API + Frontend
 
-- `Readarr.Api.V1` (155 files) -- REST endpoint layer over the ported core
+- `Readarr.Api.V1` (155 files) -- REST endpoint layer over the ported core.
+  Foundation (`Readarr.Http` + `NzbDrone.SignalR`, 74 files: generic
+  `RestController`/`ProviderControllerBase` router factories, auth
+  middleware, error pipeline, client-schema field-mapping, SignalR-equivalent
+  WebSocket broadcaster) ported first as one coherent composition root
+  (not split across parallel agents, unlike every other module in this
+  project -- everything else depends on getting this one right). Landed at
+  `apps/server/src/http-api/`. Chose Express (+ `ws` for the SignalR
+  equivalent) as the framework -- no HTTP framework existed anywhere in
+  this port before Phase 5.
+  Remaining 34 resource-controller directories (minus ImportLists, deferred
+  per above) split into parallel worktrees against that real base, grouped
+  by theme/shared-dependency rather than raw file count, since several
+  groups reuse `providerControllerBase()` directly (Indexers, DownloadClient,
+  Notifications, Metadata, ImportLists once it lands) and should follow an
+  identical, consistent pattern.
 - `frontend/` (985 JS/JSX files) -- already React; port to TS incrementally,
   wire against the new API
 

@@ -25,3 +25,17 @@ for (const dir of migrationDirs) {
   cpSync(from, to, { recursive: true, filter: (src) => !src.endsWith(".test.ts") });
   console.log(`Copied ${from} -> ${to}`);
 }
+
+// Same problem, different runtime asset: localizationService.ts reads its
+// bundled English dictionary (localization/Core/en.json) relative to its
+// own compiled location via import.meta.url (same DEFAULT_EN_DICTIONARY_PATH
+// pattern as db-factory.ts's migrations dirs above) -- tsc's resolveJsonModule
+// only type-checks a .json import, it doesn't copy the file into dist, so
+// this needs the same explicit copy step.
+const srcLocalizationDir = join(__dirname, "..", "src", "localization", "Core");
+const distLocalizationDir = join(__dirname, "..", "dist", "localization", "Core");
+
+if (existsSync(srcLocalizationDir)) {
+  cpSync(srcLocalizationDir, distLocalizationDir, { recursive: true });
+  console.log(`Copied ${srcLocalizationDir} -> ${distLocalizationDir}`);
+}

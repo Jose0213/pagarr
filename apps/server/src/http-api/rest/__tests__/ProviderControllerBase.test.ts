@@ -12,6 +12,7 @@ import {
 } from "../../../thingi-provider/index.js";
 import { readarrErrorPipeline } from "../../error-management/ReadarrErrorPipeline.js";
 import { providerControllerBase } from "../ProviderControllerBase.js";
+import { providerResourceMapper, type ProviderResource } from "../ProviderResource.js";
 import type { FieldDefinition } from "../../client-schema/SchemaBuilder.js";
 
 interface MockSettings extends IProviderConfig {
@@ -430,5 +431,172 @@ describe("providerControllerBase", () => {
       .send(validBody({ name: "" })); // would fail sharedValidator if it ran
 
     expect(res.status).toBe(200);
+  });
+});
+
+/**
+ * Proves the `resourceMapper` extension seam (see ProviderControllerBase.ts's
+ * module doc comment's "resourceMapper" section): a caller-supplied mapper
+ * with its own extra top-level resource field -- mirroring the real
+ * `IndexerResourceMapper : ProviderResourceMapper<IndexerResource,
+ * IndexerDefinition>` pattern (`IndexerResource.Priority`/`.EnableRss` etc,
+ * layered on top of `base.ToResource(definition)`/`base.ToModel(resource)`)
+ * -- round-trips correctly through create/update/get, WITHOUT needing
+ * `Indexers/IndexerController.ts`'s `router.use(baseRouter)` delegation
+ * workaround or `resources/extraProviderFields.ts`'s middleware-hoisting
+ * workaround. This is the seam both `port/api-indexers-search` and
+ * `port/api-download-notifications` independently worked around before
+ * this fix landed.
+ */
+describe("providerControllerBase -- resourceMapper extension seam", () => {
+  /** A `ProviderDefinition<MockSettings>` widened with one extra field, mirroring `IndexerProviderDefinition`'s relationship to the generic base. */
+  interface MockWideDefinition extends ProviderDefinition<MockSettings> {
+    priority: number;
+  }
+
+  /** A `ProviderResource` widened with the same extra field, mirroring `IndexerResource`. */
+  interface MockWideResource extends ProviderResource {
+    priority: number;
+  }
+
+  function buildSeamApp() {
+    const provider = fakeProvider("MockProvider");
+    const repo = inMemoryRepository();
+    const providerFactory = new ProviderFactory<IProvider<MockSettings>, MockSettings>(
+      repo,
+      [provider],
+      new Map([["mockprovider", () => fakeProvider("MockProvider")]])
+    );
+
+    const base = providerResourceMapper<MockSettings>({
+      fieldDefs,
+      createDefaultSettings: defaultSettings,
+    });
+
+    // Mirrors indexerResourceMapper()'s exact shape: wrap the generic base
+    // mapper, layer one extra top-level field on top in both directions.
+    const wideMapper = {
+      toResource(definition: MockWideDefinition): MockWideResource {
+        const resource = base.toResource(definition) as MockWideResource;
+        resource.priority = definition.priority;
+        return resource;
+      },
+      toModel(resource: MockWideResource | null | undefined): MockWideDefinition {
+        const model = base.toModel(resource) as MockWideDefinition;
+        model.priority = resource?.priority ?? 25;
+        return model;
+      },
+    };
+
+    const router = providerControllerBase({
+      providerFactory,
+      settingsSchema: { fieldDefs, createDefaultSettings: defaultSettings },
+      resourceMapper: wideMapper,
+    });
+
+    const app = express();
+    app.use(express.json());
+    app.use("/provider", router);
+    app.use(readarrErrorPipeline());
+
+    return { app, providerFactory };
+  }
+
+  function validSeamBody(overrides: Record<string, unknown> = {}) {
+    return {
+      id: 0,
+      name: "My Provider",
+      implementation: "MockProvider",
+      configContract: "MockSettings",
+      tags: [],
+      priority: 10,
+      fields: [
+        { name: "host", value: "example.com" },
+        { name: "port", value: 9999 },
+      ],
+      ...overrides,
+    };
+  }
+
+  it("POST / round-trips the custom mapper's extra field (priority) in the 201 response", async () => {
+    const { app } = buildSeamApp();
+
+    const res = await request(app)
+      .post("/provider")
+      .send(validSeamBody({ priority: 42 }));
+
+    expect(res.status).toBe(201);
+    expect(res.body.priority).toBe(42);
+    expect(res.body.name).toBe("My Provider");
+  });
+
+  it("GET /:id returns the extra field after create", async () => {
+    const { app } = buildSeamApp();
+
+    const created = await request(app)
+      .post("/provider")
+      .send(validSeamBody({ priority: 7 }));
+    const res = await request(app).get(`/provider/${created.body.id}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.priority).toBe(7);
+  });
+
+  it("PUT /:id updates the extra field and returns it in the 202 response", async () => {
+    const { app } = buildSeamApp();
+
+    const created = await request(app)
+      .post("/provider")
+      .send(validSeamBody({ priority: 1 }));
+    const res = await request(app)
+      .put(`/provider/${created.body.id}`)
+      .send(validSeamBody({ id: created.body.id, priority: 33 }));
+
+    expect(res.status).toBe(202);
+    expect(res.body.priority).toBe(33);
+
+    const refetched = await request(app).get(`/provider/${created.body.id}`);
+    expect(refetched.body.priority).toBe(33);
+  });
+
+  it("GET / lists the extra field on every definition", async () => {
+    const { app } = buildSeamApp();
+    await request(app)
+      .post("/provider")
+      .send(validSeamBody({ name: "A", priority: 5 }));
+    await request(app)
+      .post("/provider")
+      .send(validSeamBody({ name: "B", priority: 9 }));
+
+    const res = await request(app).get("/provider");
+
+    expect(res.status).toBe(200);
+    const priorities = (res.body as { name: string; priority: number }[])
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .map((r) => r.priority);
+    expect(priorities).toEqual([5, 9]);
+  });
+
+  it("omitting resourceMapper still uses the generic default mapper (backward compatible)", async () => {
+    const provider = fakeProvider("MockProvider");
+    const repo = inMemoryRepository();
+    const providerFactory = new ProviderFactory<IProvider<MockSettings>, MockSettings>(
+      repo,
+      [provider],
+      new Map([["mockprovider", () => fakeProvider("MockProvider")]])
+    );
+    const router = providerControllerBase({
+      providerFactory,
+      settingsSchema: { fieldDefs, createDefaultSettings: defaultSettings },
+    });
+    const app = express();
+    app.use(express.json());
+    app.use("/provider", router);
+    app.use(readarrErrorPipeline());
+
+    const res = await request(app).post("/provider").send(validBody());
+
+    expect(res.status).toBe(201);
+    expect(res.body.priority).toBeUndefined();
   });
 });

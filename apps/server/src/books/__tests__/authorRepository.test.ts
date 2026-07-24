@@ -226,4 +226,64 @@ describe("AuthorRepository", () => {
     expect(all).toHaveLength(2);
     expect(all.every((a) => a.metadata !== undefined)).toBe(true);
   });
+
+  /**
+   * Regression coverage for the upsert() double-serialization bugfix -- see
+   * bookRepository.test.ts's identical describe block for the full
+   * explanation (BasicRepository.upsert()'s internal this.insert()/
+   * this.update() calls re-enter this class's own overrides via JS virtual
+   * dispatch; upsert() must not ALSO pre-serialize before delegating).
+   */
+  describe("upsert", () => {
+    it("insert-branch (id 0): stores JSON-embedded columns single-encoded, not double-encoded", () => {
+      const meta = metaRepo.insert({
+        ...newAuthorMetadata(),
+        foreignAuthorId: "fa-upsert-insert",
+        titleSlug: "t-upsert-insert",
+        name: "Upsert Author",
+      });
+
+      const upserted = repo.upsert({
+        ...newAuthor(),
+        authorMetadataId: meta.id,
+        cleanName: "upsertauthor",
+        path: "/books/upsert",
+        monitored: true,
+        tags: [1, 2, 3],
+      });
+
+      expect(upserted.id).toBeGreaterThan(0);
+      expect(upserted.tags).toEqual([1, 2, 3]);
+
+      const conn = db.openConnection();
+      const row = conn.prepare('SELECT "Tags" FROM "Authors" WHERE "Id" = ?').get(upserted.id) as {
+        Tags: string;
+      };
+      expect(JSON.parse(row.Tags)).toEqual([1, 2, 3]);
+
+      const fetched = repo.get(upserted.id);
+      expect(fetched.tags).toEqual([1, 2, 3]);
+    });
+
+    it("update-branch (id != 0): stores JSON-embedded columns single-encoded, not double-encoded", () => {
+      const existing = insertAuthorWithMetadata(
+        { tags: [9] },
+        { foreignAuthorId: "fa-upsert-update", titleSlug: "t-upsert-update" }
+      );
+
+      const upserted = repo.upsert({ ...existing, tags: [4, 5, 6] });
+
+      expect(upserted.id).toBe(existing.id);
+      expect(upserted.tags).toEqual([4, 5, 6]);
+
+      const conn = db.openConnection();
+      const row = conn.prepare('SELECT "Tags" FROM "Authors" WHERE "Id" = ?').get(existing.id) as {
+        Tags: string;
+      };
+      expect(JSON.parse(row.Tags)).toEqual([4, 5, 6]);
+
+      const fetched = repo.get(existing.id);
+      expect(fetched.tags).toEqual([4, 5, 6]);
+    });
+  });
 });

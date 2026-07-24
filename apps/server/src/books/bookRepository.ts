@@ -144,8 +144,26 @@ export class BookRepository extends BasicRepository<Book> {
     super.updateMany(models.map(serialize));
   }
 
+  /**
+   * BUGFIX (discovered while porting http-api/resources/Calendar/, which
+   * reads `BookService.booksBetweenDates` -> `rowToBook` results and found
+   * `genres`/`links`/etc double-JSON-encoded): `super.upsert(serialize(model))`
+   * called `BasicRepository.upsert`, which internally branches to
+   * `this.insert(model)`/`this.update(model)` -- but `this` at that call
+   * site is the actual `BookRepository` INSTANCE (JS virtual dispatch), so
+   * it re-entered THIS class's own `insert`/`update` overrides, each of
+   * which calls `serialize(model)` AGAIN on the already-serialized model --
+   * double-serializing every JSON-embedded column on every upsert-created/
+   * updated row. Fixed by inlining the id===0 branch here and calling
+   * `BasicRepository`'s own `insert`/`update` directly (`super.insert`/
+   * `super.update`, NOT `this.insert`/`this.update`) on an ALREADY-serialized
+   * model, matching this class's own `insert`/`update` overrides' actual
+   * serialize-once contract exactly.
+   */
   override upsert(model: Book): Book {
-    return deserialize(super.upsert(serialize(model)));
+    const row = serialize(model);
+    const saved = row.id === 0 ? super.insert(row) : super.update(row);
+    return deserialize(saved);
   }
 
   override setFields(model: Book, properties: Exclude<keyof Book, "id">[]): void {

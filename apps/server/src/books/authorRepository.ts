@@ -199,8 +199,19 @@ export class AuthorRepository extends BasicRepository<Author> {
     super.updateMany(models.map(serialize));
   }
 
+  /**
+   * BUGFIX (see bookRepository.ts's identical fix for the full
+   * explanation): `super.upsert(serialize(model))` re-entered THIS class's
+   * own `insert`/`update` overrides via virtual dispatch inside
+   * `BasicRepository.upsert`, each serializing the already-serialized model
+   * a second time. Fixed by branching explicitly and calling
+   * `BasicRepository`'s `insert`/`update` directly on an already-serialized
+   * row.
+   */
   override upsert(model: Author): Author {
-    return deserialize(super.upsert(serialize(model)));
+    const row = serialize(model);
+    const saved = row.id === 0 ? super.insert(row) : super.update(row);
+    return deserialize(saved);
   }
 
   override setFields(model: Author, properties: Exclude<keyof Author, "id">[]): void {

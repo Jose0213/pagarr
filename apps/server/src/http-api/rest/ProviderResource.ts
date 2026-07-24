@@ -140,4 +140,89 @@ export function providerResourceMapper<TProviderConfig extends IProviderConfig>(
   };
 }
 
+/**
+ * A single extra top-level resource field spec -- the real wire JSON
+ * property name plus its default value when a live definition never set
+ * it. Same `{key, defaultValue}` shape every concrete `*Resource.ts` module
+ * in this codebase already declares for its own extra fields (e.g.
+ * `DownloadClientResource.ts`'s `DOWNLOAD_CLIENT_EXTRA_FIELDS`,
+ * `NotificationResource.ts`'s `NOTIFICATION_EXTRA_FIELDS`,
+ * `MetadataResource.ts`'s `METADATA_EXTRA_FIELDS`, `IndexerResource.ts`'s
+ * five fields declared inline instead of as a spec array since Indexers'
+ * mapper is hand-written rather than built from this helper).
+ */
+export interface ExtraProviderFieldSpec {
+  key: string;
+  defaultValue: unknown;
+}
+
+/**
+ * Builds a `resourceMapper` for `providerControllerBase()`'s `resourceMapper`
+ * option (see that module's doc comment's "resourceMapper" section) that
+ * wraps the generic `providerResourceMapper()` and copies a fixed list of
+ * extra top-level fields directly to/from IDENTICALLY-NAMED properties on
+ * the definition -- the exact mechanism the real C# `ProviderResourceMapper`
+ * subclasses use (e.g. `IndexerResourceMapper.ToResource` setting
+ * `resource.EnableRss = definition.EnableRss`), just generic over an
+ * arbitrary field list instead of hand-writing each assignment.
+ *
+ * This is the REPLACEMENT for `resources/extraProviderFields.ts`'s
+ * `wrapProviderRouterWithExtraFields()` HTTP-middleware-based approach
+ * (hoisting extra fields into reserved `$$`-prefixed `Field[]` entries so
+ * they round-trip through the generic settings-schema pipeline) -- that
+ * approach was itself a workaround for this exact seam not existing yet.
+ * With a real `resourceMapper` injection point, extra fields need no
+ * detour through `settings`/`fields[]` at all: `toModel`/`toResource` read/
+ * write them as real properties on the definition directly, matching how
+ * a concrete `ProviderDefinition` subtype (e.g. `DownloadClientDefinition`,
+ * `NotificationDefinition`) already declares them as real fields.
+ *
+ * Suitable for the common case where every extra field is a plain,
+ * unconditional property copy in both directions (DownloadClient/
+ * Notifications/Metadata's own `*_EXTRA_FIELDS` specs are all exactly this
+ * shape -- see each module's own doc comment). A controller needing
+ * bespoke per-field logic beyond a straight copy (computed values,
+ * validation side effects) should build its own `resourceMapper` by hand
+ * instead (as `Indexers/IndexerController.ts`'s
+ * `dispatchingIndexerResourceMapper()` does), or wrap this helper's output.
+ */
+export function extraFieldsProviderResourceMapper<
+  TProviderConfig extends IProviderConfig,
+  TDefinition extends ProviderDefinition<TProviderConfig>,
+  TResource extends ProviderResource,
+>(
+  settingsSchema: ProviderSettingsSchema<TProviderConfig>,
+  extraFields: readonly ExtraProviderFieldSpec[],
+  wikiSlug = "readarr"
+): {
+  toResource: (definition: TDefinition) => TResource;
+  toModel: (resource: TResource | null | undefined) => TDefinition;
+} {
+  const base = providerResourceMapper<TProviderConfig>(settingsSchema, wikiSlug);
+
+  return {
+    toResource(definition: TDefinition): TResource {
+      const resource = base.toResource(definition) as unknown as Record<string, unknown>;
+      const source = definition as unknown as Record<string, unknown>;
+
+      for (const spec of extraFields) {
+        resource[spec.key] = source[spec.key] ?? spec.defaultValue;
+      }
+
+      return resource as unknown as TResource;
+    },
+
+    toModel(resource: TResource | null | undefined): TDefinition {
+      const definition = base.toModel(resource) as unknown as Record<string, unknown>;
+      const source = (resource ?? {}) as unknown as Record<string, unknown>;
+
+      for (const spec of extraFields) {
+        definition[spec.key] = spec.key in source ? source[spec.key] : spec.defaultValue;
+      }
+
+      return definition as unknown as TDefinition;
+    },
+  };
+}
+
 export { ProviderMessage };

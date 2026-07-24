@@ -329,4 +329,66 @@ describe("BookRepository", () => {
       expect(bookRepo.getAuthorBooksWithFiles(author).map((b) => b.id)).toEqual([book.id]);
     });
   });
+
+  /**
+   * Regression coverage for the upsert() double-serialization bugfix (see
+   * this class's own `upsert()` doc comment): `BasicRepository.upsert()`
+   * calls `this.insert(model)`/`this.update(model)` internally, which via
+   * JS virtual dispatch re-enters THIS class's own overrides -- if
+   * `upsert()` itself also pre-serializes before delegating to the base
+   * class's `upsert()`, the model gets serialized twice, corrupting every
+   * JSON-embedded column's stored value. No test previously exercised
+   * `upsert()` directly (only `insert()`/`update()` separately), which is
+   * how the bug went unnoticed.
+   */
+  describe("upsert", () => {
+    it("insert-branch (id 0): stores JSON-embedded columns single-encoded, not double-encoded", () => {
+      const author = insertAuthor();
+
+      const upserted = bookRepo.upsert({
+        ...newBook(),
+        authorMetadataId: author.authorMetadataId,
+        foreignBookId: "fb-upsert-insert",
+        titleSlug: "t-upsert-insert",
+        title: "Upserted Book",
+        cleanTitle: "upsertedbook",
+        genres: ["Fantasy", "Adventure"],
+      });
+
+      expect(upserted.id).toBeGreaterThan(0);
+      expect(upserted.genres).toEqual(["Fantasy", "Adventure"]);
+
+      // Raw column inspection: a correctly single-serialized column parses
+      // in ONE JSON.parse to the real array -- a double-serialized column
+      // would parse to a STRING that itself still needs parsing.
+      const conn = db.openConnection();
+      const row = conn.prepare('SELECT "Genres" FROM "Books" WHERE "Id" = ?').get(upserted.id) as {
+        Genres: string;
+      };
+      expect(JSON.parse(row.Genres)).toEqual(["Fantasy", "Adventure"]);
+
+      // A fresh get() (independent read path) must also see the real array.
+      const fetched = bookRepo.get(upserted.id);
+      expect(fetched.genres).toEqual(["Fantasy", "Adventure"]);
+    });
+
+    it("update-branch (id != 0): stores JSON-embedded columns single-encoded, not double-encoded", () => {
+      const author = insertAuthor();
+      const existing = insertBook(author.authorMetadataId, { genres: ["Old Genre"] });
+
+      const upserted = bookRepo.upsert({ ...existing, genres: ["New Genre", "Second Genre"] });
+
+      expect(upserted.id).toBe(existing.id);
+      expect(upserted.genres).toEqual(["New Genre", "Second Genre"]);
+
+      const conn = db.openConnection();
+      const row = conn.prepare('SELECT "Genres" FROM "Books" WHERE "Id" = ?').get(existing.id) as {
+        Genres: string;
+      };
+      expect(JSON.parse(row.Genres)).toEqual(["New Genre", "Second Genre"]);
+
+      const fetched = bookRepo.get(existing.id);
+      expect(fetched.genres).toEqual(["New Genre", "Second Genre"]);
+    });
+  });
 });

@@ -104,15 +104,49 @@ import {
  * Ported as `verifyValidationResult()` below, operating on this port's
  * `ValidationResult` shape (validation/validationResult.ts, already used
  * throughout this codebase) rather than a new type.
+ *
+ * ## `resourceMapper` -- the `ProviderResourceMapper` extension seam
+ *
+ * The real C# `ProviderControllerBase<TProviderResource,
+ * TBulkProviderResource, TProvider, TProviderDefinition>` takes a
+ * `TProviderResourceMapper ResourceMapper` CONSTRUCTOR argument specifically
+ * so a concrete controller (e.g. `IndexerResourceMapper : ProviderResourceMapper
+ * <IndexerResource, IndexerDefinition>`) can override `ToResource`/`ToModel`
+ * to add its own extra top-level resource fields beyond the generic
+ * `Fields: List<Field>` settings array (`IndexerResource.EnableRss`,
+ * `NotificationResource.OnGrab`, `DownloadClientResource.Priority`, etc.).
+ * This factory's optional `resourceMapper` option is that same seam: when
+ * supplied, it's used INSTEAD of the internally-constructed default
+ * `providerResourceMapper(settingsSchema, wikiSlug)` for every
+ * toResource/toModel call this function makes (GET /, GET /:id, GET
+ * /schema incl. presets, POST /, PUT /:id, PUT /bulk). Omitting it keeps
+ * the exact prior behavior (the generic base mapper, additive/
+ * backward-compatible -- no existing caller needs to change).
+ *
+ * `TProviderResource`/`TProviderDefinitionWide` let a concrete controller's
+ * mapper operate on ITS OWN widened resource/definition shapes (e.g.
+ * `IndexerResource`/`IndexerProviderDefinition`) while every other part of
+ * this factory (validation, `IProviderFactory<TProvider, TProviderConfig>`
+ * CRUD, bulk-tag application) keeps working against the generic
+ * `ProviderResource`/`ProviderDefinition<TProviderConfig>` base shapes --
+ * safe because a concrete mapper's types are always structural supertypes
+ * of the base (`IndexerResource extends ProviderResource`,
+ * `IndexerProviderDefinition extends ProviderDefinition<IProviderConfig>`),
+ * exactly mirroring the real C# generic's own covariant relationship
+ * between `TProviderResourceMapper` and the class's `TProviderResource`/
+ * `TProviderDefinition` parameters.
  */
 
 export interface ProviderControllerOptions<
   TProvider extends IProvider<TProviderConfig>,
   TProviderConfig extends IProviderConfig,
+  TProviderResource extends ProviderResource = ProviderResource,
+  TProviderDefinitionWide extends ProviderDefinition<TProviderConfig> =
+    ProviderDefinition<TProviderConfig>,
 > {
   providerFactory: IProviderFactory<TProvider, TProviderConfig>;
   settingsSchema: ProviderSettingsSchema<TProviderConfig>;
-  /** Ported from ProviderResourceMapper's `InfoLink` format string's `readarr` slug -- see ProviderResource.ts's `providerResourceMapper` doc comment. */
+  /** Ported from ProviderResourceMapper's `InfoLink` format string's `readarr` slug -- see ProviderResource.ts's `providerResourceMapper` doc comment. Ignored when `resourceMapper` is supplied (the caller's own mapper owns InfoLink formatting then). */
   wikiSlug?: string;
   /** Extra shared/post validator rules layered on top of the four base rules every concrete controller wires up (name/implementation/configContract/fields-not-null) -- see module doc comment's SharedValidator/PostValidator bullet. */
   extraSharedValidator?: ResourceValidator<ProviderResource>;
@@ -122,6 +156,17 @@ export interface ProviderControllerOptions<
     resource: ProviderBulkResource | null | undefined,
     existingDefinitions: ProviderDefinition<TProviderConfig>[]
   ) => ProviderDefinition<TProviderConfig>[];
+  /**
+   * Ported from the real base class's `TProviderResourceMapper ResourceMapper`
+   * constructor argument -- see this module's doc comment's "resourceMapper"
+   * section. Optional; defaults to `providerResourceMapper(settingsSchema,
+   * wikiSlug)` (the generic base mapper, prior behavior unchanged) when
+   * omitted.
+   */
+  resourceMapper?: {
+    toResource: (definition: TProviderDefinitionWide) => TProviderResource;
+    toModel: (resource: TProviderResource | null | undefined) => TProviderDefinitionWide;
+  };
 }
 
 /** Ported from ProviderControllerBase's private `VerifyValidationResult`. */
@@ -146,9 +191,32 @@ function parseForceFlag(req: Request, name: string): boolean {
 export function providerControllerBase<
   TProvider extends IProvider<TProviderConfig>,
   TProviderConfig extends IProviderConfig,
->(options: ProviderControllerOptions<TProvider, TProviderConfig>): Router {
+  TProviderResource extends ProviderResource = ProviderResource,
+  TProviderDefinitionWide extends ProviderDefinition<TProviderConfig> =
+    ProviderDefinition<TProviderConfig>,
+>(
+  options: ProviderControllerOptions<
+    TProvider,
+    TProviderConfig,
+    TProviderResource,
+    TProviderDefinitionWide
+  >
+): Router {
   const { providerFactory, settingsSchema, wikiSlug } = options;
-  const mapper = providerResourceMapper<TProviderConfig>(settingsSchema, wikiSlug);
+  // Ported extension seam -- see module doc comment's "resourceMapper"
+  // section. A caller-supplied mapper is used INSTEAD of the internal
+  // generic default; omitting it keeps prior behavior unchanged (the cast
+  // is safe because the default's own toResource/toModel are typed exactly
+  // `ProviderResource`/`ProviderDefinition<TProviderConfig>`, which are
+  // `TProviderResource`/`TProviderDefinitionWide`'s own default type
+  // arguments when no custom mapper -- and therefore no narrower generics
+  // -- are supplied).
+  const mapper =
+    options.resourceMapper ??
+    (providerResourceMapper<TProviderConfig>(settingsSchema, wikiSlug) as unknown as {
+      toResource: (definition: TProviderDefinitionWide) => TProviderResource;
+      toModel: (resource: TProviderResource | null | undefined) => TProviderDefinitionWide;
+    });
   const updateBulkModel = options.updateBulkModel ?? defaultUpdateBulkModel;
 
   // Ported from the ctor's SharedValidator/PostValidator rules:
@@ -206,10 +274,10 @@ export function providerControllerBase<
   const validators = { sharedValidator, postValidator, putValidator };
 
   /** Ported from GetResourceById: fetches the definition, stamps characteristics, maps to resource. Used by GET /:id, and by Created/Accepted-equivalent responses after create/update. */
-  function getResourceById(id: number): ProviderResource {
+  function getResourceById(id: number): TProviderResource {
     const definition = providerFactory.get(id);
     providerFactory.setProviderCharacteristics(definition);
-    return mapper.toResource(definition);
+    return mapper.toResource(definition as TProviderDefinitionWide);
   }
 
   /**
@@ -245,13 +313,13 @@ export function providerControllerBase<
    * running first against an undefined array.
    */
   function getDefinition(
-    resource: ProviderResource,
+    resource: TProviderResource,
     validate: boolean,
     includeWarnings: boolean,
     forceValidate: boolean,
     method: "POST" | "PUT",
     requestPath: string
-  ): ProviderDefinition<TProviderConfig> {
+  ): TProviderDefinitionWide {
     // Ported from OnActionExecuting's resource-shaped validation (shared/post/put rules) -- runs first, see doc comment above.
     validateResource(resource, method, requestPath, validators);
 
@@ -271,7 +339,7 @@ export function providerControllerBase<
   }
 
   async function test(
-    definition: ProviderDefinition<TProviderConfig>,
+    definition: TProviderDefinitionWide,
     includeWarnings: boolean
   ): Promise<void> {
     const result = await providerFactory.test(definition);
@@ -288,7 +356,7 @@ export function providerControllerBase<
     }
 
     const result = definitions
-      .map((d) => mapper.toResource(d))
+      .map((d) => mapper.toResource(d as TProviderDefinitionWide))
       .sort((a, b) => a.name.localeCompare(b.name));
 
     res.json(result.map(stripDefaultId));
@@ -302,9 +370,11 @@ export function providerControllerBase<
     );
 
     const result = defaultDefinitions.map((definition) => {
-      const resource = mapper.toResource(definition);
+      const resource = mapper.toResource(definition as TProviderDefinitionWide);
       const presetDefinitions = providerFactory.getPresetDefinitions(definition);
-      resource.presets = presetDefinitions.map((preset) => mapper.toResource(preset));
+      resource.presets = presetDefinitions.map((preset) =>
+        mapper.toResource(preset as TProviderDefinitionWide)
+      );
       return resource;
     });
 
@@ -344,7 +414,7 @@ export function providerControllerBase<
   router.post("/test", (req, res, next) => {
     void (async () => {
       try {
-        const resource = req.body as ProviderResource;
+        const resource = req.body as TProviderResource;
         const forceTest = parseForceFlag(req, "forceTest");
 
         if (!resource) {
@@ -379,7 +449,7 @@ export function providerControllerBase<
   router.post("/action/:name", (req, res, next) => {
     void (async () => {
       try {
-        const resource = req.body as ProviderResource;
+        const resource = req.body as TProviderResource;
         validateResource(resource, "POST", requestPath(req), validators, {
           skipValidation: true,
           skipValidationShared: true,
@@ -444,7 +514,9 @@ export function providerControllerBase<
         const updated = updateBulkModel(bulkResource, definitionsToUpdate);
         const result = providerFactory.updateMany(updated);
 
-        res.status(202).json(result.map((d) => stripDefaultId(mapper.toResource(d))));
+        res
+          .status(202)
+          .json(result.map((d) => stripDefaultId(mapper.toResource(d as TProviderDefinitionWide))));
       } catch (err) {
         next(err);
       }
@@ -477,7 +549,7 @@ export function providerControllerBase<
   router.post("/", (req, res, next) => {
     void (async () => {
       try {
-        const resource = req.body as ProviderResource;
+        const resource = req.body as TProviderResource;
         const forceSave = parseForceFlag(req, "forceSave");
 
         const definition = getDefinition(
@@ -506,7 +578,7 @@ export function providerControllerBase<
   router.put("/:id", (req, res, next) => {
     void (async () => {
       try {
-        const resource = req.body as ProviderResource;
+        const resource = req.body as TProviderResource;
         const routeId = Number.parseInt(req.params["id"] ?? "", 10);
 
         if (!resource.id) {

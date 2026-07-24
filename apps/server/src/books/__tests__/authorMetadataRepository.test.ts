@@ -130,4 +130,50 @@ describe("AuthorMetadataRepository", () => {
       expect(all.find((a) => a.foreignAuthorId === "fa-2")?.name).toBe("Brand New");
     });
   });
+
+  /**
+   * Regression coverage for the singular upsert() double-serialization
+   * bugfix -- see bookRepository.test.ts's identical describe block for the
+   * full explanation. NOTE: this is distinct from upsertMany() above, which
+   * routes through this class's own already-correct insertMany()/
+   * updateMany() overrides and was never affected by this bug.
+   */
+  describe("upsert", () => {
+    it("insert-branch (id 0): stores JSON-embedded columns single-encoded, not double-encoded", () => {
+      setup();
+
+      const upserted = repo.upsert(metadata({ genres: ["Fantasy", "Sci-Fi"] }));
+
+      expect(upserted.id).toBeGreaterThan(0);
+      expect(upserted.genres).toEqual(["Fantasy", "Sci-Fi"]);
+
+      const conn = db.openConnection();
+      const row = conn
+        .prepare('SELECT "Genres" FROM "AuthorMetadata" WHERE "Id" = ?')
+        .get(upserted.id) as { Genres: string };
+      expect(JSON.parse(row.Genres)).toEqual(["Fantasy", "Sci-Fi"]);
+
+      const fetched = repo.get(upserted.id);
+      expect(fetched.genres).toEqual(["Fantasy", "Sci-Fi"]);
+    });
+
+    it("update-branch (id != 0): stores JSON-embedded columns single-encoded, not double-encoded", () => {
+      setup();
+      const existing = repo.insert(metadata({ genres: ["Old"] }));
+
+      const upserted = repo.upsert({ ...existing, genres: ["New", "Genres"] });
+
+      expect(upserted.id).toBe(existing.id);
+      expect(upserted.genres).toEqual(["New", "Genres"]);
+
+      const conn = db.openConnection();
+      const row = conn
+        .prepare('SELECT "Genres" FROM "AuthorMetadata" WHERE "Id" = ?')
+        .get(existing.id) as { Genres: string };
+      expect(JSON.parse(row.Genres)).toEqual(["New", "Genres"]);
+
+      const fetched = repo.get(existing.id);
+      expect(fetched.genres).toEqual(["New", "Genres"]);
+    });
+  });
 });
