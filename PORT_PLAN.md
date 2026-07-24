@@ -226,7 +226,7 @@ Wave 2):
   -- discovered missing from every Phase 1-4 wave (not on the original
   explicitly-skipped list alongside Update/Analytics; a genuine planning
   gap, not a deliberate exclusion). Surfaced because `Readarr.Api.V1/
-  ImportLists/` (5 files) needs a real core module to sit on top of.
+ImportLists/` (5 files) needs a real core module to sit on top of.
   `Goodreads/` here needs the same dead-API scrutiny already applied twice
   (MetadataSource's client, Notifications' webhook) -- same Dec-2020
   API-key cutoff likely applies a third time. Ported as its own module,
