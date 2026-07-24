@@ -25,9 +25,12 @@ import { authorToResource } from "../AuthorResource.js";
 /**
  * All fixture author paths use a Windows-rooted absolute path
  * (`isValidFolderPath` -- validation/paths/pathValidation.ts -- branches on
- * `process.platform`, and these tests run on the same Windows CI/dev host
- * this repo targets) so SharedValidator/PutValidator's real path-shape rule
- * doesn't reject perfectly valid fixture data.
+ * `process.platform`), so `process.platform` is stubbed to `"win32"` for
+ * this file's tests (see `beforeEach` below) -- CI runs on Linux runners,
+ * where these paths would otherwise fail SharedValidator/PutValidator's
+ * real path-shape rule and every create/update route would 400. Matches
+ * the established stubbing convention this repo already uses elsewhere
+ * (e.g. `FileSystem/__tests__/FileSystemLookupService.test.ts`).
  */
 const TEST_ROOT = "C:\\books";
 const TEST_AUTHOR_PATH = "C:\\books\\Stephen King";
@@ -224,12 +227,15 @@ describe("authorController", () => {
   let ctx: ReturnType<typeof buildTestController>;
 
   beforeEach(() => {
+    // See this file's top-of-file comment: fixture paths are Windows-rooted.
+    vi.stubGlobal("process", { ...process, platform: "win32" });
     ctx = buildTestController();
   });
 
   afterEach(() => {
     ctx.unsubscribe();
     ctx.signalRBroadcaster.close();
+    vi.unstubAllGlobals();
   });
 
   describe("GET /", () => {
