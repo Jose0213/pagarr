@@ -42,8 +42,8 @@ importers:
         specifier: 6.0.3
         version: 6.0.3
       nodemailer:
-        specifier: 9.0.3
-        version: 9.0.3
+        specifier: 9.1.1
+        version: 9.1.1
       sharp:
         specifier: 0.35.3
         version: 0.35.3(@types/node@22.20.1)
@@ -1436,8 +1436,8 @@ packages:
     resolution: {integrity: sha512-dT5G3wbPtwCnG1j3Rrts7LlyX5r5Xo0A2G/omt7akrcbSm6iPGrNgjdwG/KlBKbiJjUj4umr7qak9jDZOBvFJg==}
     engines: {node: '>=12.16.1'}
 
-  nodemailer@9.0.3:
-    resolution: {integrity: sha512-n+YP+NKwR5zRWa60k3GiQ6Q3B4KXCoAw40dAKeCtYn020iNN74aWK2liXIC3ZEATeGql7we3tE3t8QwhY0eskw==}
+  nodemailer@9.1.1:
+    resolution: {integrity: sha512-izw9mVKFix6YSnC9eLgV6g1opl9DUlRio9ZNcq+Wu9Ujn2UwF+8Nl0B8nz22kEC+CTZCvinkxwJ0DeFbb6NwcQ==}
     engines: {node: '>=6.0.0'}
 
   object-inspect@1.13.4:
@@ -3098,7 +3098,7 @@ snapshots:
       os-locale: 6.0.2
       uuid: 8.3.2
 
-  nodemailer@9.0.3: {}
+  nodemailer@9.1.1: {}
 
   object-inspect@1.13.4: {}
 
